@@ -14,4 +14,7 @@
 !CoroutineTest/
 !CoroutineTest/**
 
+!AutoExecEditor/
+!AutoExecEditor/**
+
 !privateAccess.cpp
