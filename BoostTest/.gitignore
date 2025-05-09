@@ -1,0 +1,12 @@
+# IDE
+.vs
+.idea
+
+# CMake
+CMakeUserPresets.json
+
+# build
+.cache
+[Bb]in/
+*[Bb]uild*/
+compile_commands.json

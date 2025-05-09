@@ -8,3 +8,6 @@
 !CMakeTest/
 !CMakeTest/**
 
+!BoostTest/
+!BoostTest/**
+
