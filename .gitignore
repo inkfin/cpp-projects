@@ -11,4 +11,7 @@
 !BoostTest/
 !BoostTest/**
 
+!CoroutineTest/
+!CoroutineTest/**
+
 !privateAccess.cpp

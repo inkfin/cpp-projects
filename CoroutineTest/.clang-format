@@ -1,0 +1,9 @@
+﻿---
+BasedOnStyle: WebKit
+AlignArrayOfStructures: Right
+SortIncludes: Never
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+  AlignFunctionPointers: true
