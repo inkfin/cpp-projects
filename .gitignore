@@ -1,0 +1,7 @@
+# This .gitignore ignore everything in the root directory, then exclude tracked projects
+*
+!.gitignore
+!README.md
+
+# project list
+
