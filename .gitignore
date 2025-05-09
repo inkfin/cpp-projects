@@ -11,3 +11,4 @@
 !BoostTest/
 !BoostTest/**
 
+!privateAccess.cpp
