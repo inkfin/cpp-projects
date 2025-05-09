@@ -5,3 +5,6 @@
 
 # project list
 
+!CMakeTest/
+!CMakeTest/**
+

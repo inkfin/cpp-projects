@@ -1,0 +1,6 @@
+.cache
+.vs
+.xmake
+
+*[Bb]uild*/
+compile_commands.json
