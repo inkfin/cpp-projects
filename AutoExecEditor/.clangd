@@ -14,4 +14,3 @@ CompileFlags:
     -Iinclude,
   ]
   Compiler: clang++
-  CompilationDatabase: build/
