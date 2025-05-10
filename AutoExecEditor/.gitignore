@@ -16,3 +16,4 @@ target/
 
 *preprocessed*.c
 
+deps/

@@ -5,17 +5,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-#===== VCPKG ===========================
-
-# if(NOT CMAKE_TOOLCHAIN_FILE)
-#     set(CMAKE_TOOLCHAIN_FILE "vcpkg/scripts/buildsystems/vcpkg.cmake"
-#         CACHE FILEPATH "Path to vcpkg toolchain file" FORCE)
-# endif()
-
-
 #===== Project Build Options ===========
 
-project(HelloWorld LANGUAGES CXX VERSION 0.1)
+project(AutoExecEditor LANGUAGES CXX VERSION 0.1)
 
 set(BINARY_NAME ${PROJECT_NAME})
 
@@ -59,21 +51,19 @@ if(USE_CCACHE)
     endif()
 endif()
 
-# message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
-
-
 #===== Dependencies ====================
 
-# include(cmake/helpers.cmake)
-# add_subdirectory(third_party/googletest)
+find_package(glfw3 3.3 REQUIRED)
+find_package(OpenGL REQUIRED)
 
-# find_package(Eigen3 COMPONENTS Eigen REQUIRED)
+add_subdirectory(imgui)
 
 #===== Source Files ====================
 
-# aux_source_directory(src SOURCE_FILES)
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
-    src/*.cpp src/*.h include/*.h
+    include/*.h
+    src/*.h
+    src/*.cpp
 )
 
 include_directories(include)
@@ -88,17 +78,18 @@ target_compile_options(${BINARY_NAME} PRIVATE
   $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
 )
 
-# option(WITH_TBB "set to ON to enable TBB, OFF to disable TBB." ON)
-# if (WITH_TBB)
-#     target_compile_definitions(${BINARY_NAME} PUBLIC WITH_TBB)
-#     find_package(TBB REQUIRED)
-#     target_link_libraries(${BINARY_NAME} PUBLIC TBB:tbb)
-# endif()
-
+if(MSVC)
+    # supress warnings
+    target_link_options(${BINARY_NAME} PRIVATE "/NODEFAULTLIB:LIBCMT")
+endif()
 
 #===== Link Libraries ==================
 
-# target_link_libraries(${BINARY_NAME} PUBLIC Eigen3::Eigen)
+target_link_libraries(${BINARY_NAME} PUBLIC
+    imgui
+    glfw
+    OpenGL::GL
+)
 
 
 #===== Output Directories ==============
@@ -117,11 +108,6 @@ message(STATUS "Set ${BINARY_NAME} binary output directory to ${CMAKE_SOURCE_DIR
 
 #===== Copy Commands ===================
 
-# cmake configure time copy
-# if(EXISTS "${CMAKE_BINARY_DIR}/compile_commands.json")
-#     file(COPY "${CMAKE_BINARY_DIR}/compile_commands.json" DESTINATION ${CMAKE_SOURCE_DIR})
-# endif()
-
 # cmake build time copy
 file(GLOB EXTRA_DLLS_TO_COPY "${CMAKE_SOURCE_DIR}/lib/*.dll")
 add_custom_command(
@@ -135,38 +121,3 @@ add_custom_command(
     COMMAND_EXPAND_LISTS
     COMMENT "Copying dlls to target directory..."
 )
-
-
-#======================================
-#===== CMake Cheat Sheet ==============
-#
-# CMAKE_BINARY_DIR: the directory where the compiled files are stored
-# CMAKE_SOURCE_DIR: the directory where the top-level CMakeLists.txt file is located
-# CMAKE_CURRENT_BINARY_DIR: the directory where the currently processed CMakeLists.txt file is compiled
-# CMAKE_CURRENT_SOURCE_DIR: the directory where the currently processed CMakeLists.txt file is located
-# CMAKE_MODULE_PATH: a list of directories containing additional CMake modules
-# CMAKE_CURRENT_LIST_FILE: the full path to the CMakeLists.txt file currently being processed
-# CMAKE_CURRENT_LIST_DIR: the directory of the CMakeLists.txt file currently being processed
-#
-# PROJECT_NAME: the name of the project defined by the project() command
-# PROJECT_SOURCE_DIR: the directory where the top-level CMakeLists.txt file is located
-# PROJECT_BINARY_DIR: the directory where the compiled files are stored
-#
-# CMAKE_INCLUDE_PATH: the list of directories that are searched for include files
-# CMAKE_LIBRARY_PATH: the list of directories that are searched for libraries
-#
-# CMAKE_SYSTEM: true if CMake is built for the system
-# CMAKE_SYSTEM_NAME: the name of the system CMake is running on
-# CMAKE_SYSTEM_VERSION: the version of the system CMake is running on
-# CMAKE_SYSTEM_PROCESSOR: the processor CMake is running on
-#
-# UNIX: true if system is UNIX-like
-# WIN32: true if system is Windows
-# APPLE: true if system is Apple
-# MSVC: true if the compiler is MSVC
-# MSVC_VERSION: the version of MSVC
-# CMAKE_C_COMPILER: the compiler used for C
-# CMAKE_CXX_COMPILER: the compiler used for C++
-#
-# ======================================
-

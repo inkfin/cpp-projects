@@ -17,7 +17,7 @@
     },
     {
       "name": "ninja",
-      "inherits": "default",
+      "inherits": "vcpkg",
       "hidden": true,
       "generator": "Ninja",
       "cacheVariables": {}
@@ -44,7 +44,7 @@
       "name": "ninja-multi",
       "displayName": "Ninja Multi-Config",
       "description": "Ninja Multi-Config configuration",
-      "inherits": "default",
+      "inherits": "vcpkg",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/multi",
       "cacheVariables": {}
@@ -54,8 +54,10 @@
       "displayName": "Vcpkg Config",
       "description": "Vcpkg configuration for CMake",
       "inherits": "default",
+      "hidden": true,
       "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
       },
       "environment": {}
     },
@@ -63,8 +65,9 @@
       "name": "MSVC",
       "displayName": "MSVC configuration",
       "description": "Visual Studio 2022 configuration",
-      "inherits": "default",
+      "inherits": "vcpkg",
       "generator": "Visual Studio 17 2022",
+      "cacheVariables": {},
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -89,14 +92,31 @@
       "inherits": "default",
       "configurePreset": "ninja-multi",
       "configuration": "Release"
+    },
+    {
+      "name": "msvc-debug",
+      "inherits": "default",
+      "configurePreset": "MSVC",
+      "configuration": "Debug"
+    },
+    {
+      "name": "msvc-release",
+      "inherits": "default",
+      "configurePreset": "MSVC",
+      "configuration": "Release"
     }
   ],
   "testPresets": [
     {
       "name": "default",
       "configurePreset": "default",
-      "output": { "outputOnFailure": true },
-      "execution": { "noTestsAction": "error", "stopOnFailure": true }
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": true
+      }
     }
   ],
   "workflowPresets": [
