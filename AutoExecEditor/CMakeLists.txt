@@ -35,7 +35,7 @@ if(USE_CCACHE)
         else()
             # Masquerade cl.exe with ccache
             #   ref: <https://github.com/ccache/ccache/wiki/MS-Visual-Studio#usage-with-cmake>
-            #file(COPY_FILE ${CCACHE_PROGRAM} ${CMAKE_BINARY_DIR}/cl.exe ONLY_IF_DIFFERENT)
+            file(COPY_FILE ${CCACHE_PROGRAM} ${CMAKE_BINARY_DIR}/cl.exe ONLY_IF_DIFFERENT)
 
             # By default Visual Studio generators will use /Zi which is not compatible
             # with ccache, so tell Visual Studio to use /Z7 instead.
@@ -51,10 +51,25 @@ if(USE_CCACHE)
     endif()
 endif()
 
+#===== Configurations ==================
+
+string(TIMESTAMP BUILD_DATE "%Y-%m-%d %H:%M" UTC)
+
+set(BUILD_INFO_IN   "${CMAKE_SOURCE_DIR}/cmake/build_info.h.in")
+set(BUILD_INFO_OUT  "${CMAKE_BINARY_DIR}/generated/build_info.h")
+
+configure_file(
+  ${BUILD_INFO_IN}
+  ${BUILD_INFO_OUT}
+  @ONLY
+)
+
+include_directories(${CMAKE_BINARY_DIR}/generated)
+
 #===== Dependencies ====================
 
 find_package(glfw3 3.3 REQUIRED)
-find_package(OpenGL REQUIRED)
+find_package(GLEW REQUIRED)
 
 add_subdirectory(imgui)
 
@@ -88,7 +103,7 @@ endif()
 target_link_libraries(${BINARY_NAME} PUBLIC
     imgui
     glfw
-    OpenGL::GL
+    GLEW::GLEW 
 )
 
 
@@ -99,25 +114,36 @@ set_target_properties(${BINARY_NAME} PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
     ## Visual Studio specific
-    VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${BINARY_NAME}>"
     VS_DEBUGGER_COMMAND           "$<TARGET_FILE:${BINARY_NAME}>"
-    VS_DEBUGGER_ENVIRONMENT       "PATH=%PATH%"
+    # VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${BINARY_NAME}>"
 )
 message(STATUS "Set ${BINARY_NAME} binary output directory to ${CMAKE_SOURCE_DIR}/target")
 
 
 #===== Copy Commands ===================
 
-# cmake build time copy
-file(GLOB EXTRA_DLLS_TO_COPY "${CMAKE_SOURCE_DIR}/lib/*.dll")
+# local assets
 add_custom_command(
     TARGET ${BINARY_NAME}
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
-            -E copy
-            -t $<TARGET_FILE_DIR:${BINARY_NAME}>
-            ${EXTRA_DLLS_TO_COPY}
-            $<TARGET_RUNTIME_DLLS:${BINARY_NAME}>
+            -E copy_directory_if_different
+            ${CMAKE_SOURCE_DIR}/assets
+            $<TARGET_FILE_DIR:${BINARY_NAME}>/assets
     COMMAND_EXPAND_LISTS
-    COMMENT "Copying dlls to target directory..."
+    COMMENT "Copying assets to target directory..."
 )
+
+# cmake build time copy
+# file(GLOB EXTRA_DLLS_TO_COPY "${CMAKE_SOURCE_DIR}/lib/*.dll")
+# add_custom_command(
+#     TARGET ${BINARY_NAME}
+#     POST_BUILD
+#     COMMAND ${CMAKE_COMMAND}
+#             -E copy
+#             -t $<TARGET_FILE_DIR:${BINARY_NAME}>
+#             ${EXTRA_DLLS_TO_COPY}
+#             $<TARGET_RUNTIME_DLLS:${BINARY_NAME}>
+#     COMMAND_EXPAND_LISTS
+#     COMMENT "Copying dlls to target directory..."
+# )

@@ -16,29 +16,16 @@
       }
     },
     {
-      "name": "ninja",
-      "inherits": "vcpkg",
+      "name": "vcpkg",
+      "displayName": "Vcpkg Config",
+      "description": "Vcpkg configuration for CMake",
+      "inherits": "default",
       "hidden": true,
-      "generator": "Ninja",
-      "cacheVariables": {}
-    },
-    {
-      "name": "ninja-debug",
-      "displayName": "Ninja Debug",
-      "description": "Ninja Debug configuration",
-      "inherits": "ninja",
       "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "ninja-release",
-      "displayName": "Ninja Release",
-      "description": "Ninja Release configuration",
-      "inherits": "ninja",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release"
-      }
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_LIBRARY_LINKAGE": "static"
+      },
+      "environment": {}
     },
     {
       "name": "ninja-multi",
@@ -50,24 +37,14 @@
       "cacheVariables": {}
     },
     {
-      "name": "vcpkg",
-      "displayName": "Vcpkg Config",
-      "description": "Vcpkg configuration for CMake",
-      "inherits": "default",
-      "hidden": true,
-      "cacheVariables": {
-        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
-        "VCPKG_TARGET_TRIPLET": "x64-windows-static"
-      },
-      "environment": {}
-    },
-    {
       "name": "MSVC",
       "displayName": "MSVC configuration",
       "description": "Visual Studio 2022 configuration",
       "inherits": "vcpkg",
       "generator": "Visual Studio 17 2022",
-      "cacheVariables": {},
+      "cacheVariables": {
+        "VCPKG_CRT_LINKAGE": "dynamic"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
@@ -103,7 +80,7 @@
       "name": "msvc-release",
       "inherits": "default",
       "configurePreset": "MSVC",
-      "configuration": "Release"
+      "configuration": "RelWithDebInfo"
     }
   ],
   "testPresets": [
