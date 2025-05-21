@@ -1,0 +1,58 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 29,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "ninja",
+      "inherits": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "cacheVariables": {}
+    },
+    {
+      "name": "ninja-multi",
+      "displayName": "Ninja Multi-Config",
+      "description": "Ninja Multi-Config configuration",
+      "inherits": "ninja",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/multi",
+      "cacheVariables": {}
+    },
+    {
+      "name": "MSVC",
+      "displayName": "MSVC configuration",
+      "description": "Visual Studio 2022 configuration",
+      "inherits": "base",
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-debug",
+      "configurePreset": "MSVC",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-release",
+      "configurePreset": "MSVC",
+      "configuration": "RelWithDebInfo"
+    }
+  ]
+}
