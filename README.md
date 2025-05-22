@@ -9,3 +9,8 @@ This is the git host of all my cpp projects.
 Other interesting ideas to keep in mind:
 
 - todo
+
+## Other Projects
+
+- CEditor
+    git@github.com:inkfin/CEditor.git
