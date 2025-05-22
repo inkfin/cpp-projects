@@ -12,5 +12,14 @@ Other interesting ideas to keep in mind:
 
 ## Other Projects
 
-- CEditor
-    git@github.com:inkfin/CEditor.git
+### CEditor
+
+> A simple text editor written in C.
+
+<git@github.com:inkfin/CEditor.git>
+
+### TinyLib
+
+> A simple C library for common tasks.
+
+<git@github.com:inkfin/TinyLib.git>
