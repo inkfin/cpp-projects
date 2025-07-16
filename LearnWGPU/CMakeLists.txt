@@ -1,16 +1,8 @@
 cmake_minimum_required(VERSION 3.29)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-
 #===== Project Build Options ===========
 
 project(LearnWGPU LANGUAGES CXX VERSION 0.1)
-
-set(BINARY_NAME ${PROJECT_NAME})
 
 if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
     message(SEND_ERROR "The binary directory of CMake cannot be the same as source directory!")
@@ -48,81 +40,29 @@ if(USE_CCACHE)
     endif()
 endif()
 
-# message(STATUS "CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
-
+# set(CMAKE_FIND_DEBUG_MODE 1)
 
 #===== Dependencies ====================
 
+# Dawn
+set (DAWN_PLATFORM_DIR "${CMAKE_SOURCE_DIR}/dawn/${CMAKE_SYSTEM_NAME}")
+
+if(NOT EXISTS ${DAWN_PLATFORM_DIR})
+    message(FATAL_ERROR "DAWN_PLATFORM_DIR is not set or does not exist: ${DAWN_PLATFORM_DIR}")
+endif()
+
+list(APPEND CMAKE_PREFIX_PATH "${DAWN_PLATFORM_DIR}/lib/cmake/Dawn")
+
 # include(cmake/helpers.cmake)
-add_subdirectory(webgpu-dawn)
 
-# find_package(Eigen3 COMPONENTS Eigen REQUIRED)
+find_package(Dawn REQUIRED CONFIG)
 
-#===== Source Files ====================
+#===== Projects ========================
 
-file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
-    src/*.cpp
-)
+add_subdirectory(src/triangle)
 
-include_directories(src)
-
-add_executable(${BINARY_NAME} ${SOURCE_FILES})
-
-
-#===== Target Build Options ============
-
-target_compile_options(${BINARY_NAME}
-    PRIVATE
-        $<$<CXX_COMPILER_ID:MSVC>:/W4>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra -Wpedantic>
-)
-
-# option(WITH_TBB "set to ON to enable TBB, OFF to disable TBB." ON)
-# if (WITH_TBB)
-#     target_compile_definitions(${BINARY_NAME} PUBLIC WITH_TBB)
-#     find_package(TBB REQUIRED)
-#     target_link_libraries(${BINARY_NAME} PUBLIC TBB:tbb)
-# endif()
-
-
-#===== Link Libraries ==================
-
-target_link_libraries(${BINARY_NAME} PUBLIC webgpu)
-
-
-#===== Output Directories ==============
-
-set_target_properties(${BINARY_NAME} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    ## Visual Studio specific
-    # VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:${BINARY_NAME}>"
-    VS_DEBUGGER_COMMAND           "$<TARGET_FILE:${BINARY_NAME}>"
-    # VS_DEBUGGER_ENVIRONMENT       "PATH=%PATH%"
-)
-message(STATUS "Set ${BINARY_NAME} binary output directory to ${CMAKE_SOURCE_DIR}/target")
-
-
-#===== Copy Commands ===================
-
-# cmake build time copy
-# file(GLOB EXTRA_DLLS_TO_COPY "${CMAKE_SOURCE_DIR}/lib/*.dll")
-# add_custom_command(
-#     TARGET ${BINARY_NAME}
-#     POST_BUILD
-#     COMMAND ${CMAKE_COMMAND}
-#             -E copy_if_different
-#             ${EXTRA_DLLS_TO_COPY}
-#             $<TARGET_RUNTIME_DLLS:${BINARY_NAME}>
-#             $<TARGET_FILE_DIR:${BINARY_NAME}> # target
-#     COMMAND_EXPAND_LISTS
-#     COMMENT "Copying dlls to target directory..."
-# )
-
-
-#======================================
-#===== CMake Cheat Sheet ==============
+#=======================================
+#===== CMake Cheat Sheet ===============
 #
 # CMAKE_BINARY_DIR: the directory where the compiled files are stored
 # CMAKE_SOURCE_DIR: the directory where the top-level CMakeLists.txt file is located
@@ -153,5 +93,3 @@ message(STATUS "Set ${BINARY_NAME} binary output directory to ${CMAKE_SOURCE_DIR
 # CMAKE_CXX_COMPILER: the compiler used for C++
 #
 # ======================================
-
-
