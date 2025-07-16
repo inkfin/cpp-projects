@@ -1,0 +1,103 @@
+{
+  "version": 8,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 29,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "hidden": true,
+      "cacheVariables": {
+        "USE_CCACHE": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "vcpkg",
+      "displayName": "Vcpkg Config",
+      "description": "Vcpkg configuration for CMake",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      },
+      "environment": {}
+    },
+    {
+      "name": "ninja-multi",
+      "displayName": "Ninja Multi-Config",
+      "description": "Ninja Multi-Config configuration",
+      "inherits": "base",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/multi",
+      "cacheVariables": {}
+    },
+    {
+      "name": "MSVC",
+      "displayName": "MSVC configuration",
+      "description": "Visual Studio 2022 configuration",
+      "inherits": "base",
+      "generator": "Visual Studio 17 2022",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-debug",
+      "configurePreset": "ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-relwithdebinfo",
+      "configurePreset": "ninja-multi",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "build-release",
+      "configurePreset": "ninja-multi",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "ninja-multi",
+      "output": { "outputOnFailure": true },
+      "execution": { "noTestsAction": "error", "stopOnFailure": true }
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "debug",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ninja-multi"
+        },
+        {
+          "type": "build",
+          "name": "build-debug"
+        }
+      ]
+    },
+    {
+      "name": "release",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "ninja-multi"
+        },
+        {
+          "type": "build",
+          "name": "build-release"
+        }
+      ]
+    }
+  ]
+}

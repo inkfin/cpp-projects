@@ -21,3 +21,6 @@
 
 !LuaVM/
 !LuaVM/**
+
+!LearnWGPU/
+!LearnWGPU/**
