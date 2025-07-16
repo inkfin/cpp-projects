@@ -1,6 +1,11 @@
+#include <webgpu/webgpu_cpp.h>
 #include <iostream>
 
 int main() {
-    std::cout << "Hello world!" << std::endl;
-}
+    wgpu::InstanceDescriptor instanceDesc = {};
 
+    wgpu::Instance instance = wgpu::CreateInstance(&instanceDesc);
+
+    std::cout << "WebGPU instance created successfully." << std::endl;
+    return 0;
+}

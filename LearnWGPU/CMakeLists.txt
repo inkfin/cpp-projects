@@ -2,7 +2,10 @@ cmake_minimum_required(VERSION 3.29)
 
 #===== Project Build Options ===========
 
-project(LearnWGPU LANGUAGES CXX VERSION 0.1)
+project(LearnWGPU
+    LANGUAGES CXX
+    VERSION 0.1
+)
 
 if(PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
     message(SEND_ERROR "The binary directory of CMake cannot be the same as source directory!")
