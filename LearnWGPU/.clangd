@@ -14,6 +14,7 @@ CompileFlags:
     -stdlib=libc++,
     -isystem,
     /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1,
+    -DWGPU_BACKEND_DAWN=1,
   ]
   Compiler: clang++
   CompilationDatabase: build/multi/

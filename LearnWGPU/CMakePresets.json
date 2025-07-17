@@ -12,7 +12,16 @@
       "hidden": true,
       "cacheVariables": {
         "USE_CCACHE": "ON",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "WGPU_BACKEND": "DAWN"
+      }
+    },
+    {
+      "name": "emsbase",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "WGPU_BACKEND": "EMSCRIPTEN"
       }
     },
     {
@@ -32,6 +41,15 @@
       "inherits": "base",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/multi",
+      "cacheVariables": {}
+    },
+    {
+      "name": "ems-ninja-multi",
+      "displayName": "Emscripten Ninja Multi-Config",
+      "description": "Emscripten Ninja Multi-Config configuration",
+      "inherits": "emsbase",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build/emsmulti",
       "cacheVariables": {}
     },
     {
@@ -61,6 +79,21 @@
     {
       "name": "build-release",
       "configurePreset": "ninja-multi",
+      "configuration": "Release"
+    },
+    {
+      "name": "ems-build-debug",
+      "configurePreset": "ems-ninja-multi",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ems-build-relwithdebinfo",
+      "configurePreset": "ems-ninja-multi",
+      "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "ems-build-release",
+      "configurePreset": "ems-ninja-multi",
       "configuration": "Release"
     }
   ],
