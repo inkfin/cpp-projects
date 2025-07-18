@@ -8,7 +8,7 @@ Hover:
 CompileFlags:
   Add: [
     -xc++,
-    -std=c++17,
+    -std=c++20,
     -Wall,
     -Wextra,
     -stdlib=libc++,

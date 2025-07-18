@@ -59,17 +59,16 @@ message(STATUS "Set TriangleApp binary output directory to ${CMAKE_SOURCE_DIR}/t
 #===== Copy Commands ===================
 
 # cmake build time copy
-# file(GLOB EXTRA_DLLS_TO_COPY "${CMAKE_SOURCE_DIR}/lib/*.dll")
-# add_custom_command(
-#     TARGET TriangleApp
-#     POST_BUILD
-#     COMMAND ${CMAKE_COMMAND}
-#             -E copy_if_different
-#             ${EXTRA_DLLS_TO_COPY}
-#             $<TARGET_RUNTIME_DLLS:TriangleApp>
-#             $<TARGET_FILE_DIR:TriangleApp> # target
-#     COMMAND_EXPAND_LISTS
-#     COMMENT "Copying dlls to target directory..."
-# )
-
+file(GLOB EXTRA_DLLS_TO_COPY "${DAWN_PLATFORM_DIR}/bin/*.dll")
+add_custom_command(
+    TARGET TriangleApp
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND}
+            -E copy_if_different
+            ${EXTRA_DLLS_TO_COPY}
+            $<TARGET_RUNTIME_DLLS:TriangleApp>
+            $<TARGET_FILE_DIR:TriangleApp> # target
+    COMMAND_EXPAND_LISTS
+    COMMENT "Copying dlls to target directory..."
+)
 

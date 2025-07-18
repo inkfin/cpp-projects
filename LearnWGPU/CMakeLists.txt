@@ -50,8 +50,10 @@ endif()
 # Dawn
 set (DAWN_PLATFORM_DIR "${CMAKE_SOURCE_DIR}/dawn/${CMAKE_SYSTEM_NAME}")
 
-if(NOT EXISTS ${DAWN_PLATFORM_DIR})
-    message(FATAL_ERROR "DAWN_PLATFORM_DIR is not set or does not exist: ${DAWN_PLATFORM_DIR}")
+if(EXISTS ${DAWN_PLATFORM_DIR})
+    message(STATUS "Using Dawn platform directory: ${DAWN_PLATFORM_DIR}")
+else()
+    message(FATAL_ERROR "Dawn CMake configuration not found in: ${DAWN_PLATFORM_DIR}/lib/cmake/Dawn")
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH "${DAWN_PLATFORM_DIR}/lib/cmake/Dawn")
