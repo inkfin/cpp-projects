@@ -18,7 +18,7 @@ wgpu::Device gDevice;
 }
 
 
-void printAdapterLimits(wgpu::Limits limits);
+void printLimits(wgpu::Limits limits, std::string_view prefix);
 
 int main(int, char**) {
 
@@ -39,6 +39,14 @@ int main(int, char**) {
         .requiredFeatureCount = 1,
         .requiredFeatures = features,
     };
+    const char* toggleName = "enable_immediate_error_handling";
+    wgpu::DawnTogglesDescriptor togglesDesc(wgpu::DawnTogglesDescriptor::Init {
+        .nextInChain = nullptr,
+        .enabledToggleCount = 1,
+        .enabledToggles = &toggleName,
+        .disabledToggleCount = 0,
+    });
+    instanceDesc.nextInChain = &togglesDesc;
     wgpu::Instance instance = wgpu::CreateInstance(&instanceDesc);
 #endif
     if (!instance) {
@@ -79,7 +87,7 @@ int main(int, char**) {
 #if !defined(__EMSCRIPTEN__)
     wgpu::Limits supportedLimits = {};
     if (::TriangleApp::gAdapter.GetLimits(&supportedLimits)) {
-        printAdapterLimits(supportedLimits);
+        printLimits(supportedLimits, "Adapter");
     } else {
         std::cerr << "Failed to get adapter limits.\n";
         return 1;
@@ -89,15 +97,18 @@ int main(int, char**) {
     // get features
     wgpu::SupportedFeatures supportedFeatures {};
     ::TriangleApp::gAdapter.GetFeatures(&supportedFeatures);
-    std::cout << "Adapter supports features:\n";
+    std::cout << "\nAdapter supports features:\n================================\n";
     for (size_t i = 0; i < supportedFeatures.featureCount; i++) {
         std::cout << supportedFeatures.features[i] << "\n";
     }
 
     // 3. Request a device from the adapter
     wgpu::DeviceDescriptor deviceDesc = {};
-    deviceDesc.SetUncapturedErrorCallback([](const wgpu::Device& device, wgpu::ErrorType type, wgpu::StringView message) {
-        std::cerr << "Uncaptured error: " << type << " - message: " << message << "\n";
+    deviceDesc.SetUncapturedErrorCallback([](const wgpu::Device&, wgpu::ErrorType type, wgpu::StringView message) {
+        std::cerr << "[Device] Uncaptured error: " << type << " - message: " << message << "\n";
+    });
+    deviceDesc.SetDeviceLostCallback(wgpu::CallbackMode::WaitAnyOnly, [](const wgpu::Device&, wgpu::DeviceLostReason reason, wgpu::StringView message) {
+        std::cerr << "[Device] Device lost: " << reason << "\n - message: " << message << "\n";
     });
 
     wgpu::Future f2 = ::TriangleApp::gAdapter.RequestDevice(
@@ -112,11 +123,15 @@ int main(int, char**) {
         });
     instance.WaitAny(f2, UINT64_MAX);
 
+    wgpu::Limits deviceLimits = {};
+    ::TriangleApp::gDevice.GetLimits(&deviceLimits);
+    printLimits(deviceLimits, "Device");
+
     return 0;
 }
 
-void printAdapterLimits(wgpu::Limits limits) {
-    std::cout << "Adapter limits:" << std::endl;
+void printLimits(wgpu::Limits limits, std::string_view prefix) {
+    std::cout << "\n" << prefix << " limits:\n=========================\n" << std::endl;
     std::cout << " - maxTextureDimension1D: " << limits.maxTextureDimension1D << std::endl;
     std::cout << " - maxTextureDimension2D: " << limits.maxTextureDimension2D << std::endl;
     std::cout << " - maxTextureDimension3D: " << limits.maxTextureDimension3D << std::endl;
