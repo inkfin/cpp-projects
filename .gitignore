@@ -24,3 +24,6 @@
 
 !LearnWGPU/
 !LearnWGPU/**
+
+!proto_bridge/
+!proto_bridge/**

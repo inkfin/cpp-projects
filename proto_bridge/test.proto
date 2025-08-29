@@ -1,0 +1,22 @@
+syntax = "proto2";
+package Test;
+
+message Location3
+{
+    optional float x = 1;
+    optional float y = 2;
+    optional float z = 3;
+}
+
+message Apple
+{
+  optional int32 id = 1;
+  optional float size = 2;
+  optional Location3 location = 3;
+}
+
+message AppleList
+{
+  repeated Apple list = 1;
+}
+
