@@ -1,103 +1,52 @@
 #include "proto_bridge.h"
-#include <iostream>
-#include <vector>
 
-using proto_bridge::Optional;
-using proto_bridge::Repeated;
-using proto_bridge::Required;
+template <class T>
+using PBBase = proto_bridge::Base<T>;
 
-struct Location3 : proto_bridge::proto_convertible_trait<Location3> {
+IMPL_PB_FIELD_OPTIONAL(Location3, float, x);
+IMPL_PB_FIELD_OPTIONAL(Location3, float, y);
+IMPL_PB_FIELD_OPTIONAL(Location3, float, z);
+
+struct Location3 : PBBase<Location3> {
     using Self = Location3;
+    // using proto_bridge::Base<Location3>::operator=;
 
-    PB_FIELD(Optional<float>, x);
-    PB_FIELD(Optional<float>, y);
-    PB_FIELD(Optional<float>, z);
+    std::optional<float> x;
+    std::optional<float> y;
+    std::optional<float> z;
 
     REGISTER_PB_FIELDS(
-        PB_FIELD_PTR(x),
-        PB_FIELD_PTR(y),
-        PB_FIELD_PTR(z))
-
-    template <typename Proto>
-    void from_proto_impl(const Proto& p)
-    {
-        if (p.has_x()) x = p.x();
-        if (p.has_y()) y = p.y();
-        if (p.has_z()) z = p.z();
-    }
-
-    template <typename Proto>
-    void to_proto_impl(Proto& p) const
-    {
-        if (x) p.set_x(*x);
-        if (y) p.set_y(*y);
-        if (z) p.set_z(*z);
-    }
+        PB_FIELD_OPTIONAL(Self, x, float),
+        PB_FIELD_OPTIONAL(Self, y, float),
+        PB_FIELD_OPTIONAL(Self, z, float))
 };
 
-struct Apple : proto_bridge::proto_convertible_trait<Apple> {
+IMPL_PB_FIELD_OPTIONAL(Apple, int, id);
+IMPL_PB_FIELD_OPTIONAL(Apple, float, size);
+IMPL_PB_FIELD_OPTIONAL(Apple, Location3, location);
+
+struct Apple : PBBase<Apple> {
     using Self = Apple;
 
-    PB_FIELD(proto_bridge::Optional<int>, id);
-    PB_FIELD(proto_bridge::Optional<float>, size);
-    PB_FIELD(proto_bridge::Optional<Location3>, location);
+    std::optional<int> id;
+    std::optional<float> size;
+    std::optional<Location3> location;
 
     REGISTER_PB_FIELDS(
-        PB_FIELD_PTR(id),
-        PB_FIELD_PTR(size),
-        PB_FIELD_PTR(location))
-
-    template <typename Proto>
-    void from_proto_impl(const Proto& p)
-    {
-        if (p.has_id()) {
-            id = p.id();
-        }
-        if (p.has_size()) {
-            size = p.size();
-        }
-        if (p.has_location()) {
-            location.emplace(Location3::from_proto(p.location()));
-        }
-    }
-
-    template <typename Proto>
-    void to_proto_impl(Proto& p) const
-    {
-        if (id) {
-            p.set_id(*id);
-        }
-        if (size) {
-            p.set_size(*size);
-        }
-        if (location) {
-            location->to_proto(*p.mutable_location());
-        }
-    }
+        PB_FIELD_OPTIONAL(Self, id, int),
+        PB_FIELD_OPTIONAL(Self, size, float),
+        PB_FIELD_OPTIONAL(Self, location, Location3))
 };
 
-struct AppleList : proto_bridge::proto_convertible_trait<AppleList> {
+
+IMPL_PB_FIELD_REPEATED(AppleList, Apple, list);
+
+struct AppleList : PBBase<AppleList> {
     using Self = AppleList;
 
-    PB_FIELD(Repeated<Apple>, list);
+    std::vector<Apple> list;
 
     REGISTER_PB_FIELDS(
-        PB_FIELD_PTR(list))
-
-    template <typename Proto>
-    void from_proto_impl(const Proto& p)
-    {
-        for (int i = 0; i < p.list_size(); ++i) {
-            list.emplace_back().from_proto(p.list(i));
-        }
-    }
-
-    template <typename Proto>
-    void to_proto_impl(Proto& p) const
-    {
-        for (const auto& apple : list) {
-            apple.to_proto(*p.add_list());
-        }
-    }
+        PB_FIELD_REPEATED(Self, list, Apple))
 };
 
