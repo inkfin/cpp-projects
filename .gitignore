@@ -27,3 +27,6 @@
 
 !proto_bridge/
 !proto_bridge/**
+
+!read_files/
+!read_files/**
