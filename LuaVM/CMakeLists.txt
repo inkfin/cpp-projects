@@ -19,23 +19,15 @@ endif()
 
 #===== Dependencies ====================
 
-# include(cmake/helpers.cmake)
-# add_subdirectory(source/luasrc)
-
-# find_package(Eigen3 COMPONENTS Eigen REQUIRED)
+add_subdirectory(dependencies/lua-5.3.6)
 
 #===== Source Files ====================
-
-# file(GLOB_RECURSE LUASRC_SOURCE_FILES CONFIGURE_DEPENDS
-#     source/luasrc/*.c
-# )
 
 file(GLOB_RECURSE LUAVM_SOURCE_FILES CONFIGURE_DEPENDS
     source/luavm/*.c
 )
 
 include_directories(
-    # source/luasrc
     source/luavm
 )
 
@@ -55,17 +47,9 @@ target_compile_options(${BINARY_NAME}
 
 #===== Link Libraries ==================
 
-add_library(Lua54 SHARED IMPORTED)
-set_target_properties(Lua54 PROPERTIES
-    LINKER_LANGUAGE C
-    IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/lib/lua54.dll"
-    IMPORTED_IMPLIB   "${CMAKE_SOURCE_DIR}/lib/lua54.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_SOURCE_DIR}/source/luadyn"
-)
-
 target_link_libraries(${BINARY_NAME}
     PRIVATE
-        Lua54
+        lua::lua
 )
 
 
@@ -85,21 +69,6 @@ message(STATUS "Set ${BINARY_NAME} binary output directory to ${CMAKE_SOURCE_DIR
 #===== Copy Commands ===================
 
 if(WIN32)
-    file(GLOB EXTRA_DLLS_TO_COPY
-        "${CMAKE_SOURCE_DIR}/lib/lua54.dll"
-    )
-    add_custom_command(
-        TARGET ${BINARY_NAME}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND}
-                -E copy_if_different
-                ${EXTRA_DLLS_TO_COPY}
-                $<TARGET_RUNTIME_DLLS:${BINARY_NAME}>
-                $<TARGET_FILE_DIR:${BINARY_NAME}> # target
-        COMMAND_EXPAND_LISTS
-        COMMENT "Copying dlls to target directory..."
-    )
-
     file(GLOB LUA_FILES_TO_COPY
         "${CMAKE_SOURCE_DIR}/*.lua"
     )

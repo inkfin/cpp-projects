@@ -8,24 +8,18 @@
   "configurePresets": [
     {
       "name": "base",
-      "binaryDir": "${sourceDir}/build/${presetName}",
       "hidden": true,
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
-      "name": "ninja",
-      "inherits": "base",
-      "hidden": true,
-      "generator": "Ninja",
-      "cacheVariables": {}
-    },
-    {
       "name": "ninja-multi",
       "displayName": "Ninja Multi-Config",
       "description": "Ninja Multi-Config configuration",
-      "inherits": "ninja",
+      "inherits": "base",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/multi",
       "cacheVariables": {}
@@ -45,14 +39,34 @@
   ],
   "buildPresets": [
     {
-      "name": "build-debug",
-      "configurePreset": "MSVC",
+      "name": "ninja-debug",
+      "configurePreset": "ninja-multi",
       "configuration": "Debug"
     },
     {
-      "name": "build-release",
-      "configurePreset": "MSVC",
+      "name": "ninja-release",
+      "configurePreset": "ninja-multi",
       "configuration": "RelWithDebInfo"
+    },
+    {
+      "name": "msvc-debug",
+      "configurePreset": "MSVC",
+      "configuration": "Debug",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
+    },
+    {
+      "name": "msvc-release",
+      "configurePreset": "MSVC",
+      "configuration": "RelWithDebInfo",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      }
     }
   ]
 }
