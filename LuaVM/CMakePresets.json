@@ -7,7 +7,7 @@
   },
   "configurePresets": [
     {
-      "name": "base",
+      "name": "ninja",
       "hidden": true,
       "binaryDir": "${sourceDir}/build/${presetName}",
       "generator": "Ninja",
@@ -19,7 +19,7 @@
       "name": "ninja-multi",
       "displayName": "Ninja Multi-Config",
       "description": "Ninja Multi-Config configuration",
-      "inherits": "base",
+      "inherits": "ninja",
       "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build/multi",
       "cacheVariables": {}
@@ -28,7 +28,7 @@
       "name": "MSVC",
       "displayName": "MSVC configuration",
       "description": "Visual Studio 2022 configuration",
-      "inherits": "base",
+      "inherits": "ninja",
       "generator": "Visual Studio 17 2022",
       "condition": {
         "type": "equals",

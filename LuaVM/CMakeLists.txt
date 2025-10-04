@@ -19,7 +19,7 @@ endif()
 
 #===== Dependencies ====================
 
-add_subdirectory(dependencies/lua-5.3.6)
+add_subdirectory(dependencies/lua)
 
 #===== Source Files ====================
 
