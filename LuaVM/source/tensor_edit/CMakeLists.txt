@@ -1,10 +1,11 @@
 cmake_minimum_required(VERSION 3.29)
 
 set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 11)
 
 #===== Project Build Options ===========
 
-project(LuaVM LANGUAGES C VERSION 0.1)
+project(TensorEdit LANGUAGES CXX VERSION 0.1)
 
 set(BINARY_NAME ${PROJECT_NAME})
 
@@ -27,12 +28,12 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/source"
 )
 
-file(GLOB LUAVM_SOURCE_FILES CONFIGURE_DEPENDS
-    *.c
+file(GLOB LUA_TENSOR_SOURCES CONFIGURE_DEPENDS
+    *.cpp
 )
 
 add_executable(${BINARY_NAME}
-    ${LUAVM_SOURCE_FILES}
+    ${LUA_TENSOR_SOURCES}
 )
 
 
@@ -41,7 +42,7 @@ add_executable(${BINARY_NAME}
 target_compile_options(${BINARY_NAME}
     PRIVATE
         $<$<CXX_COMPILER_ID:MSVC>:/W4>
-        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall>
+        $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-Wall -Wextra>
 )
 
 #===== Link Libraries ==================
