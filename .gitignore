@@ -30,3 +30,6 @@
 
 !read_files/
 !read_files/**
+
+!strategy_pattern/
+!strategy_pattern/**

@@ -1,0 +1,19 @@
+# IDE
+.vs
+.vscode
+.idea
+compile_commands.json
+CMakeUserPresets.json
+
+# build
+.cache
+.DS_Store
+bin/
+target/
+*[Bb]uild*/
+
+*.o
+
+*preprocessed*.c
+
+
