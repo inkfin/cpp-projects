@@ -2,8 +2,8 @@ project(TriangleApp
     VERSION 0.1.0
     LANGUAGES CXX)
 
-set(WGPU_BACKEND "DAWN" CACHE STRING "WGPU backend to use. Options: DAWN, WGPU_NATIVE, EMSCRIPTEN")
-set_property(CACHE WGPU_BACKEND PROPERTY STRINGS DAWN WGPU_NATIVE EMSCRIPTEN)
+set(WEBGPU_BACKEND "DAWN" CACHE STRING "WGPU backend to use. Options: DAWN, WGPU_NATIVE, EMSCRIPTEN")
+set_property(CACHE WEBGPU_BACKEND PROPERTY STRINGS DAWN WGPU_NATIVE EMSCRIPTEN)
 
 #===== Source Files ====================
 
@@ -33,11 +33,11 @@ target_compile_options(TriangleApp
 
 target_link_libraries(TriangleApp PUBLIC dawn::webgpu_dawn)
 
-# add WGPU_BACKEND_XXX macro to the target
-set_target_properties(TriangleApp PROPERTIES COMPILE_DEFINITIONS "WGPU_BACKEND_${WGPU_BACKEND}")
-message(STATUS "Setting WGPU_BACKEND_${WGPU_BACKEND} compile definition")
+# add WEBGPU_BACKEND_XXX macro to the target
+set_target_properties(TriangleApp PROPERTIES COMPILE_DEFINITIONS "WEBGPU_BACKEND_${WEBGPU_BACKEND}")
+message(STATUS "Setting WEBGPU_BACKEND_${WEBGPU_BACKEND} compile definition")
 
-if(WGPU_BACKEND STREQUAL "EMSCRIPTEN")
+if(WEBGPU_BACKEND STREQUAL "EMSCRIPTEN")
     set_target_properties(TriangleApp PROPERTIES SUFFIX ".html")
     message(STATUS "Building for Emscripten backend")
 endif()

@@ -6,7 +6,7 @@
 #  include <emscripten.h>
 #endif // __EMSCRIPTEN__
 #include <webgpu/webgpu_cpp.h>
-#if defined(WGPU_BACKEND_DAWN)
+#if defined(WEBGPU_BACKEND_DAWN)
 #include <dawn/webgpu_cpp_print.h>
 #endif
 
@@ -22,11 +22,11 @@ void printLimits(wgpu::Limits limits, std::string_view prefix);
 
 int main(int, char**) {
 
-#if defined(WGPU_BACKEND_DAWN)
+#if defined(WEBGPU_BACKEND_DAWN)
     std::cout << "Using Dawn backend." << std::endl;
-#elif defined(WGPU_BACKEND_WGPU_NATIVE)
+#elif defined(WEBGPU_BACKEND_WGPU)
     std::cout << "Using wgpu-native backend." << std::endl;
-#elif defined(WGPU_BACKEND_EMSCRIPTEN)
+#elif defined(WEBGPU_BACKEND_EMSCRIPTEN)
     std::cout << "Using Emscripten backend." << std::endl;
 #endif
 
@@ -126,6 +126,43 @@ int main(int, char**) {
     wgpu::Limits deviceLimits = {};
     ::TriangleApp::gDevice.GetLimits(&deviceLimits);
     printLimits(deviceLimits, "Device");
+
+    // 4. Create a command queue
+    wgpu::Queue queue = ::TriangleApp::gDevice.GetQueue();
+    queue.OnSubmittedWorkDone(wgpu::CallbackMode::WaitAnyOnly, [](wgpu::QueueWorkDoneStatus status, wgpu::StringView message) {
+        std::cout << "[Queue] Work finished with status: " << status << "\n - message: " << message << "\n";
+    });
+
+    // 4.1. Create a command encoder
+    // wgpu::CommandBuffer commandBuffer;
+    {
+        wgpu::CommandEncoderDescriptor encoderDesc = {
+            .label = "Triangle Command Encoder",
+        };
+        wgpu::CommandEncoder encoder = ::TriangleApp::gDevice.CreateCommandEncoder(&encoderDesc);
+
+        encoder.InsertDebugMarker("Do one thing");
+        encoder.InsertDebugMarker("Do another thing");
+
+        wgpu::CommandBufferDescriptor cmdBufferDesc = {
+            .label = "Triangle Command Buffer",
+        };
+        wgpu::CommandBuffer  commandBuffer = encoder.Finish(&cmdBufferDesc);
+        // Drop command encoder before submit
+
+        std::cout << "Submitting command...\n";
+        queue.Submit(1, &commandBuffer);
+        std::cout << "Command submitted.\n";
+    }
+
+    for (size_t i = 0; i < 5; i++) {
+        std::cout << "Tick/Poll device...\n";
+#if defined(WEBGPU_BACKEND_DAWN)
+        ::TriangleApp::gDevice.Tick();
+#elif defined(__EMSCRIPTEN__)
+        emscripten_sleep(100);
+#endif
+    }
 
     return 0;
 }
