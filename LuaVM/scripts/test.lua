@@ -1,2 +1,4 @@
-a = 7 + 11 + math.sin(23.7)
+local a = 7 + 11 + math.sin(23.7)
 a = a + 10
+
+_G.a = a
