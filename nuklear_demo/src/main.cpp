@@ -1,5 +1,5 @@
 /* nuklear - 1.32.0 - public domain */
-#include "nuklear_inc.h"
+#include "nuklear_config.h"
 #include "nuklear/nuklear_sdl_gl3.h"
 
 #include "overview.h"

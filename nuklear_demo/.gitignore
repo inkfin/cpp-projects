@@ -6,4 +6,6 @@ build/
 .DS_Store
 
 
-.cache/clangd/index
+.cache
+.root
+compile_commands.json
