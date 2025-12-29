@@ -36,3 +36,6 @@
 
 !nuklear_demo/
 !nuklear_demo/**
+
+!inklisp/
+!inklisp/**
