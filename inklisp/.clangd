@@ -1,0 +1,15 @@
+# https://clangd.llvm.org/config
+
+InlayHints:
+  BlockEnd: true
+Hover:
+  ShowAKA: true
+
+CompileFlags:
+  Add: [
+    -xc,
+    -std=c11,
+    -Wall,
+    -Wextra,
+  ]
+  Compiler: gcc
