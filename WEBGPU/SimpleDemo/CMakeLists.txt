@@ -15,6 +15,10 @@ set(BINARY_NAME app)
 
 #===== Dependencies ====================
 
+set(DAWN_CLONE_DIR  ${CMAKE_SOURCE_DIR}/../dawn)
+# EMSDK version 4.0.23
+set(DAWN_VERSION    v20251002.162335)
+set(DAWN_FETCH_DEPENDENCIES ON)
 include(../cmake/webgpu_glfw_backend.cmake)
 
 #===== Targets =========================
@@ -42,6 +46,7 @@ target_link_libraries(${BINARY_NAME}
 
 #===== Copy Commands ===================
 
+if(EMSCRIPTEN)
 # cmake build time copy
 add_custom_command(
     TARGET ${BINARY_NAME}
@@ -54,5 +59,5 @@ add_custom_command(
     COMMAND_EXPAND_LISTS
     COMMENT "Copying dlls to target directory..."
 )
-
+endif()
 

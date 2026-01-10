@@ -1,0 +1,23 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "base",
+      "binaryDir": "${sourceDir}/builds/${presetName}",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "emscripten",
+      "inherits": "base",
+      "toolchainFile": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake"
+    },
+    {
+      "name": "dawn",
+      "inherits": "base"
+    }
+  ]
+}
+
