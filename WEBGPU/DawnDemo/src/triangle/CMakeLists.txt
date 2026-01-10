@@ -42,30 +42,16 @@ if(WEBGPU_BACKEND STREQUAL "EMSCRIPTEN")
     message(STATUS "Building for Emscripten backend")
 endif()
 
-#===== Output Directories ==============
-
-set_target_properties(TriangleApp PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/target/$<CONFIG>"
-    ## Visual Studio specific
-    # VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:TriangleApp>"
-    VS_DEBUGGER_COMMAND           "$<TARGET_FILE:TriangleApp>"
-    # VS_DEBUGGER_ENVIRONMENT       "PATH=%PATH%"
-)
-message(STATUS "Set TriangleApp binary output directory to ${CMAKE_SOURCE_DIR}/target")
-
-
 #===== Copy Commands ===================
 
 # cmake build time copy
-file(GLOB EXTRA_DLLS_TO_COPY "${DAWN_PLATFORM_DIR}/bin/*.dll")
+file(GLOB EXPORT_LIBS "${DAWN_PLATFORM_DIR}/bin/*.dll")
 add_custom_command(
     TARGET TriangleApp
     POST_BUILD
     COMMAND ${CMAKE_COMMAND}
             -E copy_if_different
-            ${EXTRA_DLLS_TO_COPY}
+            ${EXPORT_LIBS}
             $<TARGET_RUNTIME_DLLS:TriangleApp>
             $<TARGET_FILE_DIR:TriangleApp> # target
     COMMAND_EXPAND_LISTS

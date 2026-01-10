@@ -22,8 +22,8 @@
 !LuaVM/
 !LuaVM/**
 
-!LearnWGPU/
-!LearnWGPU/**
+!WEBGPU/
+!WEBGPU/**
 
 !proto_bridge/
 !proto_bridge/**
