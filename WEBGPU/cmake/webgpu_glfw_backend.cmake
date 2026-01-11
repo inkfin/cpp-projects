@@ -30,7 +30,7 @@ else() # Not EMSCRIPTEN
     include(FetchContent)
     include(FindPython3)
 
-    FetchContent_Declare(dawn
+    FetchContent_Declare(Dawn
         GIT_REPOSITORY https://github.com/google/dawn.git
         GIT_TAG        ${DAWN_VERSION}
         GIT_SHALLOW    TRUE
@@ -39,7 +39,7 @@ else() # Not EMSCRIPTEN
 
         EXCLUDE_FROM_ALL
     )
-    FetchContent_MakeAvailable(dawn)
+    FetchContent_MakeAvailable(Dawn)
 
     if("${dawn_SOURCE_DIR}")
     # Manually fetch dependencies of Dawn because Dawn's third_party module
