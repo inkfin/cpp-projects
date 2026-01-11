@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.28)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -18,13 +18,12 @@ set(BINARY_NAME app)
 set(DAWN_CLONE_DIR  ${CMAKE_SOURCE_DIR}/../dawn)
 # EMSDK version 4.0.23
 set(DAWN_VERSION    v20251002.162335)
-set(DAWN_FETCH_DEPENDENCIES ON)
 include(../cmake/webgpu_glfw_backend.cmake)
 
 #===== Targets =========================
 
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
-    *.h *.cpp
+    src/*.h src/*.cpp
 )
 
 add_executable(${BINARY_NAME} ${SOURCE_FILES})
