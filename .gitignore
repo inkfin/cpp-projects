@@ -39,3 +39,7 @@
 
 !inklisp/
 !inklisp/**
+
+!CArena/
+!CArena/**
+
