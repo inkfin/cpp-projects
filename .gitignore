@@ -43,3 +43,5 @@
 !CArena/
 !CArena/**
 
+!CParser/
+!CParser/**
