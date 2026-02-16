@@ -8,7 +8,7 @@ SRC_DIRS := .
 INCLUDE_DIR := include
 TARGET_NAME := app
 
-CFLAGS := -std=c11 -Wall -Wextra \
+CFLAGS := -std=c99 -Wall -Wextra \
 		  -Wno-unused-function
 CFLAGS_DEBUG := -O0 -g -ggdb \
 				-fsanitize=address,undefined \
@@ -31,8 +31,8 @@ SRC := $(shell find $(SRC_DIRS) -name '*.c')
 
 BUILD_DIR := target
 OBJ_DIR   := $(BUILD_DIR)/objs
-BIN_DIR   := $(BUILD_DIR)/bin
 DEP_DIR   := $(BUILD_DIR)/deps
+BIN_DIR   := $(BUILD_DIR)
 
 OBJ := $(patsubst %.c,$(OBJ_DIR)/%.o,$(SRC))
 DEP := $(patsubst %.c,$(DEP_DIR)/%.d,$(SRC))
