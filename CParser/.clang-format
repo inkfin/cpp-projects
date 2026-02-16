@@ -1,0 +1,21 @@
+---
+BasedOnStyle: Google
+IndentWidth: 4
+UseTab: Never
+TabWidth: 4
+AccessModifierOffset: -3
+ColumnLimit: 120
+SortIncludes:
+  Enabled: false
+PointerAlignment: Right
+BreakAfterReturnType: All
+AlignConsecutiveMacros: Consecutive
+AlignArrayOfStructures: Right
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossComments: true
+  AlignCompound: true
+  AlignFunctionPointers: true
+
+...
+
