@@ -23,7 +23,6 @@
 #include <string.h>
 #include <stddef.h>
 
-
 #if defined(__cplusplus)
 #error "Bro just use STL lol"
 #endif
@@ -33,29 +32,27 @@
 
 #if TLDS_DEBUG_PRINT
 #include <stdio.h>
-#define TLDS__PRINT(fmt, ...) fprintf(stderr, "[FATAL] %s: " fmt "\n", __func__, ##__VA_ARGS__)
+#define TLDS__PRINT(fmt, ...) fprintf(stderr, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
 #else
 #define TLDS__PRINT(fmt, ...)
 #endif
 
 #ifndef TLDS_ASSERT
 #include <assert.h>
-#define TLDS_ASSERT(expr, msg, ...)                                              \
-    do {                                                                         \
-        if (!(expr)) {                                                           \
-            TLDS__PRINT("Assertion failed (" #expr "): " msg, ##__VA_ARGS__); \
-            assert(expr);                                                        \
-        }                                                                        \
+#define TLDS_ASSERT(expr, msg, ...)                                                   \
+    do {                                                                              \
+        if (!(expr)) {                                                                \
+            TLDS__PRINT("[ERROR] Assertion failed (" #expr "): " msg, ##__VA_ARGS__); \
+            assert(expr);                                                             \
+        }                                                                             \
     } while (0)
 #endif
 
-
 typedef union tl_max_align {
     long double ld;
-    void *p;
-    long long ll;
+    void       *p;
+    long long   ll;
 } tl_max_align_t;
-
 
 /////////////////////
 /** Dynamic Array **/
@@ -68,8 +65,9 @@ typedef union tl_max_align {
  *
  * NOTE:
  *   - `magic` field only checks struct returned by library api, not arbitrary pointer.
- *   - `max_align_t` guarantee the data pointer is properly aligned for any type, but it also means the header size is
- *      at least 16 bytes on 64-bit platform, which is a trade-off for simplicity and safety.
+ *   - `max_align_t` guarantee the data pointer is aligned at least to alignof(tl_max_align_t) (sufficient for most
+ *     object types on this platform), but it also means the header size is at least 16 bytes on 64-bit platform, which
+ *     is a trade-off for simplicity and safety.
  *   - data pointer is always non-NULL when the array is initialized, but the size can be 0
  */
 struct DynArrayHeader {
@@ -82,8 +80,13 @@ struct DynArrayHeader {
     tl_max_align_t data[];
 };
 
+typedef struct DynArrayRange {
+    size_t start;
+    size_t end;  // exclusive
+} DynArrayRange;
+
 #ifndef TL_ARR_INITIAL_CAPACITY
-#  define TL_ARR_INITIAL_CAPACITY 4
+#define TL_ARR_INITIAL_CAPACITY 4
 #endif
 
 #define TL_ARR_MAGIC_NUM   UINT32_C(0xDEADBEEF)
@@ -101,11 +104,17 @@ struct DynArrayHeader {
 
 /** check array pointer managed by this library */
 #if TLDS_DBG
-#define TL_ARR_VALID(p) ((p) != NULL && TL_ARR_HEADER(p)->magic == TL_ARR_MAGIC_NUM)
+#define TL_ARR_CHECK_VALID(p)                                                                                     \
+    do {                                                                                                          \
+        TLDS_ASSERT((p) != NULL, "Array not initialized: NULL pointer");                                          \
+        TLDS_ASSERT(TL_ARR_HEADER(p)->magic == TL_ARR_MAGIC_NUM, "Invalid array pointer: magic number mismatch"); \
+    } while (0)
 #else
-#define TL_ARR_VALID(p) ((p) != NULL)
+#define TL_ARR_CHECK_VALID(p)                                            \
+    do {                                                                 \
+        TLDS_ASSERT((p) != NULL, "Array not initialized: NULL pointer"); \
+    } while (0)
 #endif
-
 
 #if TLDS_ABBR
 
@@ -120,14 +129,20 @@ struct DynArrayHeader {
 #define arr_init_reserve tl_arr_init_reserve
 #define arr_free         tl_arr_free
 #define arr_clear        tl_arr_clear
+#define arr_shrink       tl_arr_shrink
 #define arr_reserve      tl_arr_reserve
 #define arr_new_item     tl_arr_new_item
+#define arr_pushp        tl_arr_pushp
+#define arr_pushv        tl_arr_pushv
+#define arr_pop_back     tl_arr_pop_back
+#define arr_del_fast     tl_arr_del_fast
+#define arr_del_stable   tl_arr_del_stable
+#define arr_del          tl_arr_del
 
 #endif
 
 static inline void *
-tl__arr_init_reserve(size_t initial_cap,
-                    size_t elem_size) {
+tl__arr_init_reserve(size_t initial_cap, size_t elem_size) {
     TLDS_ASSERT(elem_size > 0, "Element size must be greater than 0");
     if (initial_cap < TL_ARR_INITIAL_CAPACITY) {
         initial_cap = TL_ARR_INITIAL_CAPACITY;
@@ -139,7 +154,8 @@ tl__arr_init_reserve(size_t initial_cap,
 
     struct DynArrayHeader *h = (struct DynArrayHeader *)malloc(TL_ARR_HEADER_SIZE + initial_cap * elem_size);
     if (h == NULL) {
-        TLDS_ASSERT(0, "Failed to allocate memory for dynamic array");
+        TLDS_ASSERT(0, "Failed to allocate memory for dynamic array, size: %zu",
+                    TL_ARR_HEADER_SIZE + initial_cap * elem_size);
         return NULL;
     }
 
@@ -161,7 +177,7 @@ tl__arr_init_reserve(size_t initial_cap,
  *   return pointer to the array if initialization is successful, NULL otherwise.
  *
  */
-#define tl_arr_init_reserve(ty, n) tl__arr_init_reserve(n, sizeof(ty))
+#define tl_arr_init_reserve(ty, n) ((ty *)tl__arr_init_reserve((n), sizeof(ty)))
 
 /**
  * tl_arr_init (<ty>, p)
@@ -171,15 +187,13 @@ tl__arr_init_reserve(size_t initial_cap,
  *
  *   return pointer to the array if initialization is successful, NULL otherwise.
  */
-#define tl_arr_init(ty) tl__arr_init_reserve(0, sizeof(ty))
+#define tl_arr_init(ty) ((ty *)tl__arr_init_reserve(0, sizeof(ty)))
 
 static inline void
 tl__arr_free(void *p) {
-    if (!TL_ARR_VALID(p)) {
-        // NULL-safe
-        TLDS__PRINT("Array not initialized, skip free");
-        return;
-    }
+    // NULL-safe
+    if (p == NULL) return;
+    TL_ARR_CHECK_VALID(p);
     free(TL_ARR_HEADER(p));
 }
 
@@ -188,7 +202,11 @@ tl__arr_free(void *p) {
  *
  *   free allocated memory and reassign p to `NULL`
  */
-#define tl_arr_free(p) (tl__arr_free(p), (p) = NULL)
+#define tl_arr_free(p)   \
+    do {                 \
+        tl__arr_free(p); \
+        (p) = NULL;      \
+    } while (0)
 
 /**
  * tl_arr_clear (p)
@@ -198,26 +216,23 @@ tl__arr_free(void *p) {
  */
 static inline void
 tl_arr_clear(void *p) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized, skip clear");
-        return;
-    }
+    TL_ARR_CHECK_VALID(p);
     TL_ARR_SIZE(p) = 0;
 }
 
 /** [Internal] Wrapper of realloc API, update cap & pp, doesn't check for pointer validity, return NULL if failed */
 static inline void *
 tl__arr_realloc(void *p, size_t new_cap, size_t elem_size) {
-    TLDS_ASSERT(elem_size == 0, "Element size must be greater than 0");
+    TLDS_ASSERT(elem_size > 0, "Element size must be greater than 0");
     if (new_cap > TL_ARR_MAX_DATA_BYTES / elem_size) {
-        TLDS_ASSERT(0, "Requested capacity too large: %zu", new_cap);
+        TLDS__PRINT("[ERROR] Requested capacity too large: %zu > %zu", new_cap, TL_ARR_MAX_DATA_BYTES / elem_size);
         return NULL;
     }
     struct DynArrayHeader *h =
         (struct DynArrayHeader *)realloc(TL_ARR_HEADER(p), TL_ARR_HEADER_SIZE + new_cap * elem_size);
     if (h == NULL) {
-        TLDS_ASSERT(0, "Failed to reallocate memory for dynamic array with new capacity: %zu and element size %zu",
-                    new_cap, elem_size);
+        TLDS__PRINT("[ERROR] Failed to reallocate memory for dynamic array of size: %zu",
+                    TL_ARR_HEADER_SIZE + new_cap * elem_size);
         return NULL;
     }
 
@@ -226,37 +241,46 @@ tl__arr_realloc(void *p, size_t new_cap, size_t elem_size) {
     return (void *)h->data;
 }
 
-static inline void
+static inline void *
 tl__arr_shrink(void *p, size_t elem_size) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized, skip shrink");
-        return;
-    }
+    TL_ARR_CHECK_VALID(p);
+
     size_t sz = TL_ARR_SIZE(p);
-    if (sz < TL_ARR_INITIAL_CAPACITY) {
-        // free the data and reset to initial capacity
-        tl__arr_realloc(p, TL_ARR_INITIAL_CAPACITY, elem_size);
-        TL_ARR_SIZE(p) = sz;
-    } else if (sz < TL_ARR_CAP(p)) {
-        // shrink to fit the current size
-        tl__arr_realloc(p, sz, elem_size);
+    size_t target = (sz < TL_ARR_INITIAL_CAPACITY) ? TL_ARR_INITIAL_CAPACITY : sz;
+    if (TL_ARR_CAP(p) > target) {
+        p = tl__arr_realloc(p, target, elem_size);
     }
+    return p;
 }
 
 /**
- * tl_arr_shrink (p)
+ * tl_arr_shrink (<ty>, p)
  *
- *   Shrink the capacity of the array to fit its current size, if the size is smaller than `TL_ARR_INITIAL_CAPACITY`,
- *   shrink to `TL_ARR_INITIAL_CAPACITY` instead to guarantee a non-NULL data pointer.
+ *   Shrink the capacity of the array to fit its current size, has a minimum capacity defined by
+ *   `TL_ARR_INITIAL_CAPACITY` to guarantee a non-NULL data pointer.
+ *
+ *   return pointer to the array if successful, NULL otherwise.
  */
-#define tl_arr_shrink(ty, p) tl__arr_shrink(p, sizeof(ty))
+#define tl_arr_shrink(ty, p)                            \
+    do {                                                \
+        void *tl__np = tl__arr_shrink((p), sizeof(ty)); \
+        if (tl__np) (p) = (ty *)tl__np;                 \
+    } while (0)
+#define tl_arr_shrink_try(ty, p, ok_out)                \
+    do {                                                \
+        void *tl__np = tl__arr_shrink((p), sizeof(ty)); \
+        if (tl__np) {                                   \
+            (p) = (ty *)tl__np;                         \
+            (ok_out) = 1;                               \
+        } else {                                        \
+            (ok_out) = 0;                               \
+        }                                               \
+    } while (0)
 
 static inline void *
 tl__arr_reserve(void *p, size_t new_cap, size_t elem_size) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized");
-        return NULL;
-    }
+    TL_ARR_CHECK_VALID(p);
+
     if (new_cap > TL_ARR_CAP(p)) {
         p = tl__arr_realloc(p, new_cap, elem_size);
     }
@@ -270,7 +294,21 @@ tl__arr_reserve(void *p, size_t new_cap, size_t elem_size) {
  *
  *   return pointer to the array if successful, NULL otherwise.
  */
-#define tl_arr_reserve(ty, p, n) ((p) = tl__arr_reserve(p, n, sizeof(ty)))
+#define tl_arr_reserve(ty, p, n)                              \
+    do {                                                      \
+        void *tl__np = tl__arr_reserve((p), (n), sizeof(ty)); \
+        if (tl__np) (p) = (ty *)tl__np;                       \
+    } while (0)
+#define tl_arr_reserve_try(ty, p, n, ok_out)                  \
+    do {                                                      \
+        void *tl__np = tl__arr_reserve((p), (n), sizeof(ty)); \
+        if (tl__np) {                                         \
+            (p) = (ty *)tl__np;                               \
+            (ok_out) = 1;                                     \
+        } else {                                              \
+            (ok_out) = 0;                                     \
+        }                                                     \
+    } while (0)
 
 /** [Internal] Align size to the next power of 2 */
 static inline size_t
@@ -305,12 +343,10 @@ tl__arr_grow_size(size_t old, size_t required) {
     }
 
     size_t new_sz = old * 2;
-    if (new_sz < required) {
+    if (old > SIZE_MAX / 2 || new_sz < required) {
         new_sz = tl__ceil_pow2_size(required);
-        if (new_sz == 0) {
-            // overflow, return max size
-            return TL_ARR_MAX_DATA_BYTES;
-        }
+        // overflow, propagate failure
+        if (new_sz == 0) return 0;
     }
     return new_sz;
 }
@@ -323,6 +359,8 @@ static inline void *
 tl__arr_ensure(void *p, size_t new_cap, size_t elem_size) {
     if (new_cap > TL_ARR_CAP(p)) {
         size_t grow_cap = tl__arr_grow_size(TL_ARR_CAP(p), new_cap);
+        // overflow, failed to grow
+        if (grow_cap == 0) return NULL;
         p = tl__arr_realloc(p, grow_cap, elem_size);
     }
     return p;
@@ -334,17 +372,19 @@ static inline void *
 tl__arr_new_item(void *p, size_t elem_size, void **new_item) {
     if (new_item == NULL) {
         TLDS_ASSERT(0, "pointer to new_item is NULL");
-        return p;
+        return NULL;
     }
     *new_item = NULL;
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized");
-        return p;
+    TL_ARR_CHECK_VALID(p);
+
+    size_t sz = TL_ARR_SIZE(p);
+    if (sz == SIZE_MAX) {
+        TLDS_ASSERT(0, "Array size overflow");
+        return NULL;
     }
-    size_t new_sz = TL_ARR_SIZE(p) + 1;
-    void  *old = p;
+    size_t new_sz = sz + 1;
     p = tl__arr_ensure(p, new_sz, elem_size);
-    if (p == NULL) return old;
+    if (p == NULL) return NULL;
 
     TL_ARR_SIZE(p) = new_sz;
     *new_item = (void *)((char *)p + (new_sz - 1) * elem_size);
@@ -357,22 +397,38 @@ tl__arr_new_item(void *p, size_t elem_size, void **new_item) {
  *   Add a new item to the end of the array and return a pointer to the new item, the caller can then assign value to
  *   the new item through the returned pointer.
  *
- *   out is the pointer to the new item if successful, NULL otherwise.
+ *   pout is the pointer to the new item if successful, NULL otherwise. NOTE: Must be a ty* lvalue variable
  *
- *   return pointer to the array if successful, NULL otherwise.
+ *   return pointer to the array to keep it updated if reallocation happens, NULL if failed to add new item.
  */
-#define tl_arr_new_item(ty, p, out) ((p) = (ty *)tl__arr_new_item(p, sizeof(ty), &(out)))
+#define tl_arr_new_item(ty, p, pout)                                        \
+    do {                                                                    \
+        void *tl__np = tl__arr_new_item((p), sizeof(ty), (void **)&(pout)); \
+        if (tl__np) (p) = (ty *)tl__np;                                     \
+    } while (0)
+#define tl_arr_new_item_try(ty, p, pout, ok_out)                            \
+    do {                                                                    \
+        void *tl__np = tl__arr_new_item((p), sizeof(ty), (void **)&(pout)); \
+        if (tl__np) {                                                       \
+            (p) = (ty *)tl__np;                                             \
+            (ok_out) = 1;                                                   \
+        } else {                                                            \
+            (ok_out) = 0;                                                   \
+        }                                                                   \
+    } while (0)
 
 static inline void *
 tl__arr_push(void *p, const void *v, size_t elem_size) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized");
-        return p;
+    TL_ARR_CHECK_VALID(p);
+
+    size_t sz = TL_ARR_SIZE(p);
+    if (sz == SIZE_MAX) {
+        TLDS_ASSERT(0, "Array size overflow");
+        return NULL;
     }
-    size_t new_sz = TL_ARR_SIZE(p) + 1;
-    void *old = p;
+    size_t new_sz = sz + 1;
     p = tl__arr_ensure(p, new_sz, elem_size);
-    if (p == NULL) return old;
+    if (p == NULL) return NULL;
 
     memcpy((char *)(p) + (new_sz - 1) * elem_size, v, elem_size);
     TL_ARR_SIZE(p) = new_sz;
@@ -380,20 +436,53 @@ tl__arr_push(void *p, const void *v, size_t elem_size) {
 }
 
 /**
- * tl_arr_push (<ty>, p, v)
+ * tl_arr_push[p|v] (<ty>, p, v)
  *
  *   Add a new item with value v to the end of the array.
+ *   There are two variants of this macro, tl_arr_pushp takes v as an pointer, while tl_arr_pushv takes v as a value and
+ *   use compound literal to pass its address to the internal function, which is more convenient for primitive types and
+ *   small structs.
  *
- *   return pointer to the array if successful, NULL otherwise.
+ *   return pointer to the array to keep it updated if reallocation happens, NULL if failed to add new item.
  */
-#define tl_arr_push(ty, p, v) ((p) = (ty *)tl__arr_push(p, v, sizeof(ty)))
+#define tl_arr_pushp(ty, p, pv)                             \
+    do {                                                    \
+        void *tl__np = tl__arr_push((p), (pv), sizeof(ty)); \
+        if (tl__np) {                                       \
+            (p) = (ty *)tl__np;                             \
+        }                                                   \
+    } while (0)
+#define tl_arr_pushp_try(ty, p, pv, ok_out)                 \
+    do {                                                    \
+        void *tl__np = tl__arr_push((p), (pv), sizeof(ty)); \
+        if (tl__np) {                                       \
+            (p) = (ty *)tl__np;                             \
+            (ok_out) = 1;                                   \
+        } else {                                            \
+            (ok_out) = 0;                                   \
+        }                                                   \
+    } while (0)
+#define tl_arr_pushv(ty, p, vv)                                    \
+    do {                                                           \
+        void *tl__np = tl__arr_push((p), &(ty){(vv)}, sizeof(ty)); \
+        if (tl__np) {                                              \
+            (p) = (ty *)tl__np;                                    \
+        }                                                          \
+    } while (0)
+#define tl_arr_pushv_try(ty, p, vv, ok_out)                        \
+    do {                                                           \
+        void *tl__np = tl__arr_push((p), &(ty){(vv)}, sizeof(ty)); \
+        if (tl__np) {                                              \
+            (p) = (ty *)tl__np;                                    \
+            (ok_out) = 1;                                          \
+        } else {                                                   \
+            (ok_out) = 0;                                          \
+        }                                                          \
+    } while (0)
 
 static inline void *
 tl__arr_pop_back(void *p, size_t elem_size) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized");
-        return NULL;
-    }
+    TL_ARR_CHECK_VALID(p);
     if (TL_ARR_SIZE(p) == 0) {
         TLDS_ASSERT(0, "Array is empty, cannot pop");
         return NULL;
@@ -406,18 +495,16 @@ tl__arr_pop_back(void *p, size_t elem_size) {
  * tl_arr_pop_back (<ty>, p)
  *
  *   Remove the last item from the array and return a pointer to the removed item, the caller can access the removed
- *   item through the returned pointer before the next modification to the array.
+ *   item through the returned pointer before the next modification to the array, e.g. push/reserve/ensure/shrink.
  *
  *   return pointer to the removed item if successful, NULL otherwise.
  */
-#define tl_arr_pop_back(ty, p) ((ty *)tl__arr_pop_back(p, sizeof(ty)))
+#define tl_arr_pop_back(ty, p) ((ty *)tl__arr_pop_back((p), sizeof(ty)))
 
 static inline void
 tl__arr_del_fast(void *p, size_t idx, size_t elem_size) {
-    if (!TL_ARR_VALID(p)) {
-        TLDS_ASSERT(0, "Array not initialized");
-        return;
-    }
+    TL_ARR_CHECK_VALID(p);
+
     size_t sz = TL_ARR_SIZE(p);
     if (idx >= sz) {
         TLDS_ASSERT(0, "Index out of bounds: %zu", idx);
@@ -436,7 +523,32 @@ tl__arr_del_fast(void *p, size_t idx, size_t elem_size) {
  *   Remove the item at index idx from the array by moving the last item to the deleted position, this operation does
  *   not preserve the order of the array but is O(1).
  */
-#define tl_arr_del_fast(ty, p, idx) tl__arr_del_fast(p, idx, sizeof(ty))
+#define tl_arr_del_fast(ty, p, idx) tl__arr_del_fast((p), idx, sizeof(ty))
 
+static inline void
+tl__arr_del_stable(void *p, size_t idx, size_t elem_size) {
+    TL_ARR_CHECK_VALID(p);
 
-#endif  /* TINYLIB_DS_H */
+    size_t sz = TL_ARR_SIZE(p);
+    if (idx >= sz) {
+        TLDS_ASSERT(0, "Index out of bounds: %zu", idx);
+        return;
+    }
+    if (idx != sz - 1) {
+        // move the items after idx to the left by one position
+        memmove((char *)p + idx * elem_size, (char *)p + (idx + 1) * elem_size, (sz - idx - 1) * elem_size);
+    }
+    TL_ARR_SIZE(p)--;
+}
+
+/**
+ * tl_arr_del_stable (<ty>, p, idx)
+ *
+ *   Remove the item at index idx from the array by moving the items after idx to the left by one position, this
+ *   operation preserves the order of the array but is O(n).
+ */
+#define tl_arr_del_stable(ty, p, idx) tl__arr_del_stable((p), idx, sizeof(ty))
+
+#define tl_arr_del tl_arr_del_stable
+
+#endif /* TINYLIB_DS_H */
