@@ -8,9 +8,16 @@ Hover:
 CompileFlags:
   Add: [
     -xc,
-    -std=c99,
+    -std=gnu11,
     -Wall,
     -Wextra,
+    -Wshadow,
+    -Wconversion,
+    -Wformat=2,
+    -Wundef,
+    -Wmissing-prototypes,
+    -Wimplicit-fallthrough,
+    -Wno-unused-function,
     -DTLDS_ABBR,
   ]
   Compiler: clang

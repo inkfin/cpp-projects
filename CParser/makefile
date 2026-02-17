@@ -8,8 +8,8 @@ SRC_DIRS := .
 INCLUDE_DIR := include
 TARGET_NAME := app
 
-CFLAGS := -std=c99 -Wall -Wextra \
-		  -Wno-unused-function
+CFLAGS := -std=gnu11 \
+		  -Wall -Wextra -Wshadow -Wconversion -Wformat=2 -Wundef -Wmissing-prototypes -Wimplicit-fallthrough
 CFLAGS_DEBUG := -O0 -g -ggdb \
 				-fsanitize=address,undefined \
 			    -fno-omit-frame-pointer \
