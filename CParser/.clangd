@@ -18,7 +18,8 @@ CompileFlags:
     -Wmissing-prototypes,
     -Wimplicit-fallthrough,
     -Wno-unused-function,
-    -DTLDS_ABBR,
+    # -DTLDS_ABBR,
+    # -DTL_LOG_IMPLEMENTATION,
   ]
   Compiler: clang
 

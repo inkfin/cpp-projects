@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include "parser.h"
 
+#define TL_LOG_IMPLEMENTATION
+#include "tl_log.h"
+
 #define MAXIMUM_BUFFER_SIZE (1u << 20)  // 1 MB
 
 int main(int argc, char* argv[]) {
@@ -12,9 +15,15 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
+    if (!tl_log_init(&(TL_LogConfig){
+            .level = TL_LOG_LEVEL_DEBUG,
+        })) {
+        return EXIT_FAILURE;
+    }
+
     // global buffer allocation
     size_t buffer_size = MAXIMUM_BUFFER_SIZE;
-    byte_t* buffer = (byte_t*)malloc(buffer_size);
+    char  *buffer = (char *)malloc(buffer_size);
 
     const char* source_file = argv[1];
     size_t file_len = 0;
@@ -34,5 +43,6 @@ int main(int argc, char* argv[]) {
 
 cleanup:
     free(buffer);
+    tl_log_deinit();
     return return_code;
 }

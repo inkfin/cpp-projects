@@ -10,7 +10,7 @@ TARGET_NAME := app
 
 CFLAGS := -std=gnu11 \
 		  -Wall -Wextra -Wshadow -Wconversion -Wformat=2 -Wundef -Wmissing-prototypes -Wimplicit-fallthrough
-CFLAGS_DEBUG := -O0 -g -ggdb \
+CFLAGS_DEBUG := -O0 -g3 -ggdb \
 				-fsanitize=address,undefined \
 			    -fno-omit-frame-pointer \
 				-fstack-protector-strong \
@@ -27,7 +27,7 @@ LDLIBS :=
 # Internal Build Logic
 # ============================================================
 
-SRC := $(shell find $(SRC_DIRS) -name '*.c')
+SRC := main.c parser.c
 
 BUILD_DIR := target
 OBJ_DIR   := $(BUILD_DIR)/objs
