@@ -57,7 +57,27 @@
 #define TLDS__TYPEOF(expr) __typeof__(expr)
 
 typedef unsigned char byte_t;
-typedef int32_t b32_t;
+
+#ifndef TLDS_MAX
+#define TLDS_MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+#ifndef max
+#define max TLDS_MAX
+#endif
+#ifndef TLDS_MIN
+#define TLDS_MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
+#ifndef min
+#define min TLDS_MIN
+#endif
+#ifndef TLDS_SWAP
+#define TLDS_SWAP(a, b)                \
+    do {                               \
+        TLDS__TYPEOF(a) tl__tmp = (a); \
+        (a) = (b);                     \
+        (b) = tl__tmp;                 \
+    } while (0)
+#endif
 
 /////////////////////
 /** Dynamic Array **/
@@ -468,7 +488,7 @@ tl__arr_pop_back(void *p, size_t elem_size) {
 #define tl_arr_pop_back(p) ((TLDS__TYPEOF(p))tl__arr_pop_back((p), sizeof(*(p))))
 
 static inline void
-tl__arr_del_fast(void *p, size_t idx, size_t elem_size) {
+tl__arr_del_fast(void *p, size_t idx, size_t elem_size, bool swap) {
     TL_ARR_CHECK_VALID(p);
 
     size_t sz = TL_ARR_SIZE(p);
@@ -477,8 +497,22 @@ tl__arr_del_fast(void *p, size_t idx, size_t elem_size) {
         return;
     }
     if (idx != sz - 1) {
-        // move the last item to the deleted position
-        memcpy((char *)p + idx * elem_size, (char *)p + (sz - 1) * elem_size, elem_size);
+        if (swap) {
+            byte_t *tmp = (byte_t *)malloc(elem_size);
+            if (tmp == NULL) {
+                TLDS_ASSERT(0, "Failed to allocate memory for temporary item in tl__arr_del_fast");
+                return;
+            }
+            byte_t *item_to_delete = (byte_t *)p + idx * elem_size;
+            byte_t *last_item = (byte_t *)p + (sz - 1) * elem_size;
+            memcpy(tmp, item_to_delete, elem_size);
+            memcpy(item_to_delete, last_item, elem_size);
+            memcpy(last_item, tmp, elem_size);
+            free(tmp);
+        } else {
+            // move the last item to the deleted position
+            memcpy((byte_t *)p + idx * elem_size, (byte_t *)p + (sz - 1) * elem_size, elem_size);
+        }
     }
     TL_ARR_SIZE(p)--;
 }
@@ -489,10 +523,11 @@ tl__arr_del_fast(void *p, size_t idx, size_t elem_size) {
  *   Remove the item at index idx from the array by moving the last item to the deleted position, this operation does
  *   not preserve the order of the array but is O(1).
  */
-#define tl_arr_del_fast(p, idx) tl__arr_del_fast((p), (idx), sizeof(*(p)))
+#define tl_arr_del_fast(p, idx)      tl__arr_del_fast((p), (idx), sizeof(*(p)), 0)
+#define tl_arr_del_fast_swap(p, idx) tl__arr_del_fast((p), (idx), sizeof(*(p)), 1)
 
 static inline void
-tl__arr_del_stable(void *p, size_t idx, size_t elem_size) {
+tl__arr_del_stable(void *p, size_t idx, size_t elem_size, bool swap) {
     TL_ARR_CHECK_VALID(p);
 
     size_t sz = TL_ARR_SIZE(p);
@@ -501,8 +536,24 @@ tl__arr_del_stable(void *p, size_t idx, size_t elem_size) {
         return;
     }
     if (idx != sz - 1) {
-        // move the items after idx to the left by one position
-        memmove((char *)p + idx * elem_size, (char *)p + (idx + 1) * elem_size, (sz - idx - 1) * elem_size);
+        size_t move_bytes = (sz - idx - 1) * elem_size;
+        if (swap) {
+            byte_t *tmp = (byte_t *)malloc(elem_size);
+            if (tmp == NULL) {
+                TLDS_ASSERT(0, "Failed to allocate memory for temporary item in tl__arr_del_stable");
+                return;
+            }
+            byte_t *item_to_delete = (byte_t *)p + idx * elem_size;
+            byte_t *last_item = (byte_t *)p + (sz - 1) * elem_size;
+            // swap the item to be deleted with the last item
+            memmove(tmp, item_to_delete, elem_size);
+            memmove(item_to_delete, item_to_delete + elem_size, move_bytes);
+            memmove(last_item, tmp, elem_size);
+            free(tmp);
+        } else {
+            // move the items after idx to the left by one position
+            memmove((byte_t *)p + idx * elem_size, (byte_t *)p + (idx + 1) * elem_size, move_bytes);
+        }
     }
     TL_ARR_SIZE(p)--;
 }
@@ -513,7 +564,8 @@ tl__arr_del_stable(void *p, size_t idx, size_t elem_size) {
  *   Remove the item at index idx from the array by moving the items after idx to the left by one position, this
  *   operation preserves the order of the array but is O(n).
  */
-#define tl_arr_del_stable(p, idx) tl__arr_del_stable((p), (idx), sizeof(*(p)))
+#define tl_arr_del_stable(p, idx)      tl__arr_del_stable((p), (idx), sizeof(*(p)), 0)
+#define tl_arr_del_stable_swap(p, idx) tl__arr_del_stable((p), (idx), sizeof(*(p)), 1)
 
 #define tl_arr_del tl_arr_del_stable
 
