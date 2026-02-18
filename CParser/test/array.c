@@ -1,21 +1,24 @@
-#include "../parser.h"
 #include <assert.h>
 #include <stdio.h>
+#define TLDS_ABBR
+#define TLDS_DEBUG
+#define TLDS_DEBUG_PRINT
+#include "../tl_ds.h"
 
 int main(void) {
     float* nl = NULL;
-    ARR_INIT(nl);
+    arr_init(nl);
     assert(ARR_SIZE(nl) == 0);
-    assert(ARR_CAP(nl) == ARR_INITIAL_CAPACITY);
+    assert(ARR_CAP(nl) == TL_ARR_INITIAL_CAPACITY);
 
-    ARR_RESERVE(nl, 10);
-    ARR_PUSH(nl, 3.14f);
+    arr_reserve(nl, 10);
+    arr_pushv(nl, 3.14f);
     assert(ARR_SIZE(nl) == 1);
-    assert(ARR_CAP(nl) == ARR_INITIAL_CAPACITY);
+    assert(ARR_CAP(nl) == TL_ARR_INITIAL_CAPACITY);
 
     for (size_t i = 0; i < 20; ++i) {
-        ARR_PUSH(nl, 3.14f);
+        arr_pushv(nl, 3.14f);
     }
 
-    ARR_FREE(nl);
+    arr_free(nl);
 }
