@@ -10,7 +10,7 @@
  *     TLDS_ABBR:
  *       enable macro abbreviations without TL prefix
  *
- *     TLDS_DBG:
+ *     TLDS_DEBUG:
  *       enable debug checks and prints
  *
  *     TL_ARR_INITIAL_CAPACITY:
@@ -28,24 +28,14 @@
 #if defined(__cplusplus)
 #error "Bro just use STL lol"
 #endif
-#if !defined(__GNUC__)
+#if !defined(__GNUC__) && !defined(__STRICT_ANSI__)
 #error "This library requires GNU extensions (build with gnu11+)."
 #endif
 #if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L) /* C11 */
 #error "This library requires C11 or later."
 #endif
 
-#ifndef TLDS_DEBUG_PRINT
-#define TLDS_DEBUG_PRINT 0
-#endif
-#ifndef TLDS_ABBR
-#define TLDS_ABBR 0
-#endif
-#ifndef TLDS_DBG
-#define TLDS_DBG 0
-#endif
-
-#if TLDS_DEBUG_PRINT
+#ifdef TLDS_DEBUG_PRINT
 #include <stdio.h>
 #define TLDS__PRINT(fmt, ...) fprintf(stderr, "%s: " fmt "\n", __func__, ##__VA_ARGS__)
 #else
@@ -88,7 +78,7 @@ typedef int32_t b32_t;
 struct DynArrayHeader {
     size_t size;
     size_t cap;
-#if TLDS_DBG
+#ifdef TLDS_DEBUG
     uint32_t magic;
 #endif
 
@@ -118,7 +108,7 @@ typedef struct DynArrayRange {
 #define TL_ARR_EMPTY(p)  (TL_ARR_SIZE(p) == 0)
 
 /** check array pointer managed by this library */
-#if TLDS_DBG
+#ifdef TLDS_DEBUG
 #define TL_ARR_CHECK_VALID(p)                                                                                     \
     do {                                                                                                          \
         TLDS_ASSERT((p) != NULL, "Array not initialized: NULL pointer");                                          \
@@ -131,7 +121,7 @@ typedef struct DynArrayRange {
     } while (0)
 #endif
 
-#if TLDS_ABBR
+#ifdef TLDS_ABBR
 
 #define ARR_HEADER TL_ARR_HEADER
 #define ARR_SIZE   TL_ARR_SIZE
@@ -176,7 +166,7 @@ tl__arr_init_reserve(size_t initial_cap, size_t elem_size) {
 
     h->cap = initial_cap;
     h->size = 0;
-#if TLDS_DBG
+#ifdef TLDS_DEBUG
     h->magic = TL_ARR_MAGIC_NUM;
 #endif
 
