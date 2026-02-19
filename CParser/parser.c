@@ -65,10 +65,10 @@ tokenize_buffer(ParserState *state,
     TokenType token_type = TOKEN_TYPE_INVALID;
     for (size_t i = 0; i < buffer_size && buffer[i] != '\0'; ++i) {
         char c = buffer[i];
-        if (IS_WHITESPACE(c) || IS_SEPARATOR(c)) {
-            LOG_DEBUG("<break> at %zu", i);
+        if (IS_WHITESPACE(c) || IS_PUNCTUATION(c)) {
+            /* LOG_DEBUG("<break> at %zu", i); */
             end = i;
-            LOG_DEBUG("beg = %zu, end = %zu", beg, end);
+            /* LOG_DEBUG("beg = %zu, end = %zu", beg, end); */
             if (end > beg) {
                 if (token_type == TOKEN_TYPE_IDENTIFIER) {
                     Token token = (Token){
@@ -82,7 +82,7 @@ tokenize_buffer(ParserState *state,
                     stpncpy(token_buf, buffer + beg, token_len);
                     token_buf[token_len] = '\0';
 
-                    LOG_DEBUG("%s<identifier>: '%s'", token_identifier_to_str(token.val.as_identifier), token_buf);
+                    LOG_DEBUG("%s<identifier>: '%s'", token_identifier_to_str(&token.val.as_identifier), token_buf);
                     arr_pushp(state->tl, &token);
                 } else if (token_type == TOKEN_TYPE_NUMBER) {
                     /* handle in tokenize stage */
@@ -105,6 +105,22 @@ tokenize_buffer(ParserState *state,
                     LOG_ERROR("%u<invalid token>: '%c' at %zu", c, c, i);
                     return EPARSE_INVALID_TOKEN;
                 }
+            }
+
+            if (IS_PUNCTUATION(c)) {
+                Token token = (Token){
+                    .type = TOKEN_TYPE_PUNCTUATION,
+                    .val = {.as_punctuation = token_punctuation_from_char(c)},
+                    .beg = i,
+                    .end = i + 1,
+                };
+
+                size_t token_len = sizeof(token_buf) < 1 ? sizeof(token_buf) : 1;
+                stpncpy(token_buf, buffer + i, token_len);
+                token_buf[token_len] = '\0';
+
+                LOG_DEBUG("%s<punctuation>: '%s'", token_punctuation_to_str(token.val.as_punctuation), token_buf);
+                arr_pushp(state->tl, &token);
             }
 
             beg = i + 1;
@@ -163,8 +179,14 @@ print_one_debug_token(const Token *token) {
         printf("<null token pointer>\n");
         return;
     }
-    printf("[DEBUG] Token: type=%d, beg=%zu, end=%zu, val=", token->type, token->beg, token->end);
+    printf("[DEBUG] Token: type=%d, beg=%zu, end=%zu, val='", token->type, token->beg, token->end);
     switch (token->type) {
+        case TOKEN_TYPE_PUNCTUATION:
+            printf("%s", token_punctuation_to_str(token->val.as_punctuation));
+            break;
+        case TOKEN_TYPE_IDENTIFIER:
+            printf("%s", token_identifier_to_str(&token->val.as_identifier));
+            break;
         case TOKEN_TYPE_NUMBER:
             printf("%f", token->val.as_number);
             break;
@@ -175,7 +197,7 @@ print_one_debug_token(const Token *token) {
             printf("<invalid token type>");
             break;
     }
-    printf("\n");
+    printf("'\n");
 }
 
 void
