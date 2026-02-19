@@ -61,14 +61,14 @@ typedef unsigned char byte_t;
 #ifndef TLDS_MAX
 #define TLDS_MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
-#ifndef max
-#define max TLDS_MAX
+#ifndef MAX
+#define MAX TLDS_MAX
 #endif
 #ifndef TLDS_MIN
 #define TLDS_MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
-#ifndef min
-#define min TLDS_MIN
+#ifndef MIN
+#define MIN TLDS_MIN
 #endif
 #ifndef TLDS_SWAP
 #define TLDS_SWAP(a, b)                \
@@ -120,12 +120,13 @@ typedef struct DynArrayRange {
 #define TL_ARR_MAX_DATA_BYTES (SIZE_MAX - TL_ARR_HEADER_SIZE)
 
 /** Handy getters that are not NULL-safe **/
-#define TL_ARR_HEADER(p) ((struct DynArrayHeader *)((char *)(p) - TL_ARR_HEADER_SIZE))
-#define TL_ARR_SIZE(p)   (TL_ARR_HEADER(p)->size)
-#define TL_ARR_CAP(p)    (TL_ARR_HEADER(p)->cap)
-#define TL_ARR_BACK(p)   (TL_ARR_SIZE(p) > 0 ? &(p)[TL_ARR_SIZE(p) - 1] : NULL)
-#define TL_ARR_FRONT(p)  (TL_ARR_SIZE(p) > 0 ? &(p)[0] : NULL)
-#define TL_ARR_EMPTY(p)  (TL_ARR_SIZE(p) == 0)
+#define TL_ARR_HEADER(p)  ((struct DynArrayHeader *)((char *)(p) - TL_ARR_HEADER_SIZE))
+#define TL_ARR_SIZE(p)    (TL_ARR_HEADER(p)->size)
+#define TL_ARR_CAP(p)     (TL_ARR_HEADER(p)->cap)
+#define TL_ARR_AT(p, idx) ((TLDS__TYPEOF(p))(TL_ARR_SIZE(p) > idx ? (char *)(p) + (idx) * sizeof(*(p)) : NULL))
+#define TL_ARR_FRONT(p)   TL_ARR_AT((p), 0)
+#define TL_ARR_BACK(p)    TL_ARR_AT((p), TL_ARR_SIZE(p) - 1)
+#define TL_ARR_EMPTY(p)   (TL_ARR_SIZE(p) == 0)
 
 /** check array pointer managed by this library */
 #ifdef TLDS_DEBUG
@@ -146,8 +147,9 @@ typedef struct DynArrayRange {
 #define ARR_HEADER TL_ARR_HEADER
 #define ARR_SIZE   TL_ARR_SIZE
 #define ARR_CAP    TL_ARR_CAP
-#define ARR_BACK   TL_ARR_BACK
+#define ARR_AT     TL_ARR_AT
 #define ARR_FRONT  TL_ARR_FRONT
+#define ARR_BACK   TL_ARR_BACK
 #define ARR_EMPTY  TL_ARR_EMPTY
 
 #define arr_init         tl_arr_init
@@ -546,9 +548,9 @@ tl__arr_del_stable(void *p, size_t idx, size_t elem_size, bool swap) {
             byte_t *item_to_delete = (byte_t *)p + idx * elem_size;
             byte_t *last_item = (byte_t *)p + (sz - 1) * elem_size;
             // swap the item to be deleted with the last item
-            memmove(tmp, item_to_delete, elem_size);
+            memcpy(tmp, item_to_delete, elem_size);
             memmove(item_to_delete, item_to_delete + elem_size, move_bytes);
-            memmove(last_item, tmp, elem_size);
+            memcpy(last_item, tmp, elem_size);
             free(tmp);
         } else {
             // move the items after idx to the left by one position
