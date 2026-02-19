@@ -41,6 +41,8 @@ int main(int argc, char* argv[]) {
         goto cleanup;
     }
 
+    print_debug_token(&parser_state);
+
 cleanup:
     free(buffer);
     tl_log_deinit();

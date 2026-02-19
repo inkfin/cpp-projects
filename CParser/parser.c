@@ -1,7 +1,6 @@
 #include "parser.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <assert.h>
 
 #define TLDS_ABBR
@@ -9,18 +8,6 @@
 #define TLDS_DEBUG_PRINT
 #include "tl_ds.h"
 #include "tl_log.h"
-
-static TokenOperatorType
-char_to_operator(char c) {
-    switch (c) {
-        case '+': return TOKEN_OP_PLUS;
-        case '-': return TOKEN_OP_MINUS;
-        case '*': return TOKEN_OP_MULTIPLY;
-        case '/': return TOKEN_OP_DIVIDE;
-        case '=': return TOKEN_OP_ASSIGNMENT;
-        default: return TOKEN_OP_INVALID;
-    }
-}
 
 ParseResult
 load_parse_file(const char *filename,
@@ -83,22 +70,36 @@ tokenize_buffer(ParserState *state,
             end = i;
             LOG_DEBUG("beg = %zu, end = %zu", beg, end);
             if (end > beg) {
-                if (token_type == TOKEN_TYPE_NUMBER) {
-                    /* handle in tokenize stage */
-                } else if (token_type == TOKEN_TYPE_OPERATOR) {
+                if (token_type == TOKEN_TYPE_IDENTIFIER) {
                     Token token = (Token){
-                        .type = TOKEN_TYPE_OPERATOR,
-                        .val = {.as_operator = char_to_operator(c)},
+                        .type = TOKEN_TYPE_IDENTIFIER,
+                        .val = {.as_identifier = token_identifier_from_str(buffer + beg, end - beg)},
                         .beg = beg,
                         .end = end,
                     };
-                    print_debug_token(&token);
 
-                    size_t token_len = sizeof(token_buf) > end - beg ? end - beg : sizeof(token_buf);
+                    size_t token_len = sizeof(token_buf) < end - beg ? sizeof(token_buf) : end - beg;
                     stpncpy(token_buf, buffer + beg, token_len);
                     token_buf[token_len] = '\0';
 
-                    LOG_DEBUG("%s<operator>: '%s'", token_operator_str(token.val.as_operator), token_buf);
+                    LOG_DEBUG("%s<identifier>: '%s'", token_identifier_to_str(token.val.as_identifier), token_buf);
+                    arr_pushp(state->tl, &token);
+                } else if (token_type == TOKEN_TYPE_NUMBER) {
+                    /* handle in tokenize stage */
+                    assert(0);
+                } else if (token_type == TOKEN_TYPE_OPERATOR) {
+                    Token token = (Token){
+                        .type = TOKEN_TYPE_OPERATOR,
+                        .val = {.as_operator = token_operator_from_str(buffer + beg, end - beg)},
+                        .beg = beg,
+                        .end = end,
+                    };
+
+                    size_t token_len = sizeof(token_buf) < end - beg ? sizeof(token_buf) : end - beg;
+                    stpncpy(token_buf, buffer + beg, token_len);
+                    token_buf[token_len] = '\0';
+
+                    LOG_DEBUG("%s<operator>: '%s'", token_operator_to_str(token.val.as_operator), token_buf);
                     arr_pushp(state->tl, &token);
                 } else {
                     LOG_ERROR("%u<invalid token>: '%c' at %zu", c, c, i);
@@ -108,22 +109,23 @@ tokenize_buffer(ParserState *state,
 
             beg = i + 1;
             token_type = TOKEN_TYPE_INVALID;
+        } else if (IS_IDENTIFIER_TOKEN(c) || token_type == TOKEN_TYPE_IDENTIFIER) {
+            token_type = TOKEN_TYPE_IDENTIFIER;
+            /* token begins with character must be an identifier, continue to break */
         } else if (IS_NUMBER_TOKEN(c)
                    || ((buffer[beg] == '-' || buffer[beg] == '+') && IS_NUMBER_TOKEN(buffer[beg + 1]))
-                   || (token_type == TOKEN_TYPE_NUMBER && buffer[beg] == '.')
         ) {
             token_type = TOKEN_TYPE_NUMBER;
             char  *endptr = NULL;
             double num = strtod(buffer + beg, &endptr);
             assert(endptr);
-            end = (size_t)(endptr - buffer) / sizeof(char);
+            end = (size_t)(endptr - buffer) / sizeof(byte_t);
             Token token = (Token){
                 .type = TOKEN_TYPE_NUMBER,
                 .val = {.as_number = num},
                 .beg = beg,
                 .end = end,
             };
-            print_debug_token(&token);
 
             size_t token_len = sizeof(token_buf) > end - beg ? end - beg : sizeof(token_buf);
             stpncpy(token_buf, buffer + beg, token_len);
@@ -134,9 +136,11 @@ tokenize_buffer(ParserState *state,
 
             i = end - 1;  // skip the rest
             beg = end;
+            token_type = TOKEN_TYPE_INVALID;
             continue;
         } else if (IS_OPERATOR_TOKEN(c)) {
             token_type = TOKEN_TYPE_OPERATOR;
+            /* token begins with '-/+' will check the second token to see if its number */
         }
     }
 
@@ -153,8 +157,8 @@ parse_buffer(ParserState *state,
     return EPARSE_SUCCESS;
 }
 
-void
-print_debug_token(const Token *token) {
+static inline void
+print_one_debug_token(const Token *token) {
     if (token == NULL) {
         printf("<null token pointer>\n");
         return;
@@ -165,7 +169,7 @@ print_debug_token(const Token *token) {
             printf("%f", token->val.as_number);
             break;
         case TOKEN_TYPE_OPERATOR:
-            printf("%s", token_operator_str(token->val.as_operator));
+            printf("%s", token_operator_to_str(token->val.as_operator));
             break;
         default:
             printf("<invalid token type>");
@@ -173,3 +177,11 @@ print_debug_token(const Token *token) {
     }
     printf("\n");
 }
+
+void
+print_debug_token(const ParserState *state) {
+    for (size_t i = 0; i < ARR_SIZE(state->tl); ++i) {
+        print_one_debug_token(&state->tl[i]);
+    }
+}
+
