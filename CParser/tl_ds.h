@@ -79,6 +79,19 @@ typedef unsigned char byte_t;
     } while (0)
 #endif
 
+typedef struct TL_String8 {
+    char  *str;
+    size_t len;
+} TL_String8;
+
+typedef struct TL_StringView {
+    union {
+        TL_String8 *str8;
+    } as;
+    size_t start;
+    size_t end;  // exclusive
+} TL_StringView;
+
 /////////////////////
 /** Dynamic Array **/
 /////////////////////
@@ -104,11 +117,6 @@ struct DynArrayHeader {
 
     _Alignas(max_align_t) byte_t data[];
 };
-
-typedef struct DynArrayRange {
-    size_t start;
-    size_t end;  // exclusive
-} DynArrayRange;
 
 #ifndef TL_ARR_INITIAL_CAPACITY
 #define TL_ARR_INITIAL_CAPACITY 4
