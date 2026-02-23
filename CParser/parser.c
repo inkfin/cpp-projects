@@ -154,6 +154,13 @@ tokenize_buffer(ParserState *state,
             beg = end;
             token_type = TOKEN_TYPE_INVALID;
             continue;
+        } else if ((buffer[beg] == '/' && buffer[beg + 1] == '/')) {
+            /* skip line comment */
+            while (i < buffer_size && buffer[i] != '\n') {
+                ++i;
+            }
+            beg = i + 1;
+            continue;
         } else if (IS_OPERATOR_TOKEN(c)) {
             token_type = TOKEN_TYPE_OPERATOR;
             /* token begins with '-/+' will check the second token to see if its number */

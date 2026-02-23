@@ -77,7 +77,6 @@ token_identifier_from_str(const char *str, size_t n) {
 
 typedef enum {
     TOKEN_COMMA,
-    TOKEN_DOT,
     TOKEN_L_PAREN,
     TOKEN_R_PAREN,
     TOKEN_L_BRACKET,
@@ -93,7 +92,6 @@ static inline const char *
 token_punctuation_to_str(TokenPunctuationType punct) {
     switch (punct) {
         case TOKEN_COMMA: return ",";
-        case TOKEN_DOT: return ".";
         case TOKEN_L_PAREN: return "(";
         case TOKEN_R_PAREN: return ")";
         case TOKEN_L_BRACKET: return "[";
@@ -110,7 +108,6 @@ static inline TokenPunctuationType
 token_punctuation_from_char(char c) {
     switch (c) {
         case ',': return TOKEN_COMMA;
-        case '.': return TOKEN_DOT;
         case '(': return TOKEN_L_PAREN;
         case ')': return TOKEN_R_PAREN;
         case '[': return TOKEN_L_BRACKET;
@@ -128,8 +125,18 @@ typedef enum {
     TOKEN_OP_MINUS,
     TOKEN_OP_MULTIPLY,
     TOKEN_OP_DIVIDE,
-    TOKEN_OP_EQUALS,
     TOKEN_OP_ASSIGNMENT,
+    TOKEN_OP_AND,
+    TOKEN_OP_OR,
+    TOKEN_OP_NOT,
+    TOKEN_OP_EQUALS,
+    TOKEN_OP_LT,
+    TOKEN_OP_GT,
+    TOKEN_OP_LE,
+    TOKEN_OP_GE,
+    TOKEN_OP_NE,
+    TOKEN_OP_AT,
+    TOKEN_OP_EVAL,
     TOKEN_OP_INVALID = 99,
 } TokenOperatorType;
 
@@ -140,8 +147,18 @@ token_operator_to_str(TokenOperatorType op) {
         case TOKEN_OP_MINUS: return "-";
         case TOKEN_OP_MULTIPLY: return "*";
         case TOKEN_OP_DIVIDE: return "/";
-        case TOKEN_OP_EQUALS: return "==";
         case TOKEN_OP_ASSIGNMENT: return "=";
+        case TOKEN_OP_AND: return "&&";
+        case TOKEN_OP_OR: return "||";
+        case TOKEN_OP_NOT: return "!";
+        case TOKEN_OP_EQUALS: return "==";
+        case TOKEN_OP_LT: return "<";
+        case TOKEN_OP_GT: return ">";
+        case TOKEN_OP_LE: return "<=";
+        case TOKEN_OP_GE: return ">=";
+        case TOKEN_OP_NE: return "!=";
+        case TOKEN_OP_AT: return "@";
+        case TOKEN_OP_EVAL: return "$";
         default: return "<invalid operator>";
     }
 }
@@ -152,8 +169,18 @@ token_operator_from_str(const char *str, size_t n) {
     if (token_is_same_str(str, n, "-")) return TOKEN_OP_MINUS;
     if (token_is_same_str(str, n, "*")) return TOKEN_OP_MULTIPLY;
     if (token_is_same_str(str, n, "/")) return TOKEN_OP_DIVIDE;
-    if (token_is_same_str(str, n, "==")) return TOKEN_OP_EQUALS;
     if (token_is_same_str(str, n, "=")) return TOKEN_OP_ASSIGNMENT;
+    if (token_is_same_str(str, n, "&&")) return TOKEN_OP_AND;
+    if (token_is_same_str(str, n, "||")) return TOKEN_OP_OR;
+    if (token_is_same_str(str, n, "!")) return TOKEN_OP_NOT;
+    if (token_is_same_str(str, n, "==")) return TOKEN_OP_EQUALS;
+    if (token_is_same_str(str, n, "<")) return TOKEN_OP_LT;
+    if (token_is_same_str(str, n, ">")) return TOKEN_OP_GT;
+    if (token_is_same_str(str, n, "<=")) return TOKEN_OP_LE;
+    if (token_is_same_str(str, n, ">=")) return TOKEN_OP_GE;
+    if (token_is_same_str(str, n, "!=")) return TOKEN_OP_NE;
+    if (token_is_same_str(str, n, "@")) return TOKEN_OP_AT;
+    if (token_is_same_str(str, n, "$")) return TOKEN_OP_EVAL;
     return TOKEN_OP_INVALID;
 }
 
@@ -191,12 +218,20 @@ typedef struct ASTNode {
 /** Lexer functions **/
 
 #define IS_NUMBER_TOKEN(c)     ((c) >= '0' && (c) <= '9')
-#define IS_OPERATOR_TOKEN(c)   ((c) == '+' || (c) == '-' || (c) == '*' || (c) == '/' || (c) == '=')
+#define IS_COMMA(c)            ((c) == ',')
+#define IS_DOT(c)              ((c) == '.')
+#define IS_OPERATOR_TOKEN(c)                                                                                         \
+    ((c) == '+' || (c) == '-' || (c) == '*' || (c) == '/' || (c) == '=' || (c) == '&' || (c) == '|' || (c) == '!' || \
+     (c) == '<' || (c) == '>' || (c) == '@' || (c) == '$')
 #define IS_WHITESPACE(c)       ((c) == ' ' || (c) == '\t' || (c) == '\r')
-#define IS_PUNCTUATION(c)                                                                                            \
-    ((c) == ',' || (c) == '.' || (c) == '(' || (c) == ')' || (c) == '[' || (c) == ']' || (c) == '{' || (c) == '}' || \
-     (c) == ';' || (c) == '\n')
-#define IS_IDENTIFIER_TOKEN(c) ((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z') || (c) == '_'
+#define IS_PARENTHESISE(c)     ((c) == '(' || (c) == ')')
+#define IS_BRACKET(c)          ((c) == '[' || (c) == ']')
+#define IS_BRACE(c)            ((c) == '{' || (c) == '}')
+#define IS_SEMICOLON(c)        ((c) == ';')
+#define IS_NEWLINE(c)          ((c) == '\n')
+#define IS_PUNCTUATION(c) \
+    (IS_COMMA(c) || IS_PARENTHESISE(c) || IS_BRACKET(c) || IS_BRACE(c) || IS_SEMICOLON(c) || IS_NEWLINE(c))
+#define IS_IDENTIFIER_TOKEN(c) (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z') || (c) == '_')
 
 /** Parser API **/
 
