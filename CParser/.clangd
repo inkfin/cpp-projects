@@ -18,6 +18,7 @@ CompileFlags:
     -Wmissing-prototypes,
     -Wimplicit-fallthrough,
     -Wno-unused-function,
+    -Iinclude,
     # -DTLDS_ABBR,
     # -DTL_LOG_IMPLEMENTATION,
   ]

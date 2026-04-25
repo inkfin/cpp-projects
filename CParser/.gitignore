@@ -1,1 +1,7 @@
 target/
+compile_commands.json
+
+# IDE
+.nvim.lua
+.zed/
+.vscode/

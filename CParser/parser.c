@@ -3,11 +3,8 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#define TLDS_ABBR
-#define TLDS_DEBUG
 #define TLDS_DEBUG_PRINT
-#include "tl_ds.h"
-#include "tl_log.h"
+#include "tinylib/logging.h"
 
 ParseResult
 load_parse_file(const char *filename,
@@ -54,8 +51,8 @@ tokenize_buffer(ParserState *state,
     }
 
     if (state->tl != NULL) arr_free(state->tl);
-    if (!arr_init_reserve(state->tl, 100)) {
-        LOG_ERROR("Failed to initialize token list\n");
+    if (!arr_reserve(state->tl, 100)) {
+        TL_LOG_ERROR("Failed to initialize token list\n");
         return EPARSE_FAILURE;
     }
 
@@ -82,8 +79,11 @@ tokenize_buffer(ParserState *state,
                     stpncpy(token_buf, buffer + beg, token_len);
                     token_buf[token_len] = '\0';
 
-                    LOG_DEBUG("%s<identifier>: '%s'", token_identifier_to_str(&token.val.as_identifier), token_buf);
-                    arr_pushp(state->tl, &token);
+                    TL_LOG_DEBUG("%s<identifier>: '%s'", token_identifier_to_str(&token.val.as_identifier), token_buf);
+                    if (!arr_push(state->tl, token)) {
+                        TL_LOG_ERROR("Failed to append identifier token\n");
+                        return EPARSE_FAILURE;
+                    }
                 } else if (token_type == TOKEN_TYPE_NUMBER) {
                     /* handle in tokenize stage */
                     assert(0);
@@ -99,10 +99,13 @@ tokenize_buffer(ParserState *state,
                     stpncpy(token_buf, buffer + beg, token_len);
                     token_buf[token_len] = '\0';
 
-                    LOG_DEBUG("%s<operator>: '%s'", token_operator_to_str(token.val.as_operator), token_buf);
-                    arr_pushp(state->tl, &token);
+                    TL_LOG_DEBUG("%s<operator>: '%s'", token_operator_to_str(token.val.as_operator), token_buf);
+                    if (!arr_push(state->tl, token)) {
+                        TL_LOG_ERROR("Failed to append operator token\n");
+                        return EPARSE_FAILURE;
+                    }
                 } else {
-                    LOG_ERROR("%u<invalid token>: '%c' at %zu", c, c, i);
+                    TL_LOG_ERROR("%u<invalid token>: '%c' at %zu", c, c, i);
                     return EPARSE_INVALID_TOKEN;
                 }
             }
@@ -119,8 +122,11 @@ tokenize_buffer(ParserState *state,
                 stpncpy(token_buf, buffer + i, token_len);
                 token_buf[token_len] = '\0';
 
-                LOG_DEBUG("%s<punctuation>: '%s'", token_punctuation_to_str(token.val.as_punctuation), token_buf);
-                arr_pushp(state->tl, &token);
+                TL_LOG_DEBUG("%s<punctuation>: '%s'", token_punctuation_to_str(token.val.as_punctuation), token_buf);
+                if (!arr_push(state->tl, token)) {
+                    TL_LOG_ERROR("Failed to append punctuation token\n");
+                    return EPARSE_FAILURE;
+                }
             }
 
             beg = i + 1;
@@ -147,8 +153,11 @@ tokenize_buffer(ParserState *state,
             stpncpy(token_buf, buffer + beg, token_len);
             token_buf[token_len] = '\0';
 
-            LOG_DEBUG("%.2f<number>: '%s'", token.val.as_number, token_buf);
-            arr_pushp(state->tl, &token);
+            TL_LOG_DEBUG("%.2f<number>: '%s'", token.val.as_number, token_buf);
+            if (!arr_push(state->tl, token)) {
+                TL_LOG_ERROR("Failed to append number token\n");
+                return EPARSE_FAILURE;
+            }
 
             i = end - 1;  // skip the rest
             beg = end;
@@ -180,7 +189,33 @@ parse_buffer(ParserState *state,
     return EPARSE_SUCCESS;
 }
 
-static inline void
+void
+free_ast_node(ASTNode *root) {
+    if (root == NULL) {
+        return;
+    }
+    free_ast_node(root->left);
+    free_ast_node(root->right);
+    free(root);
+}
+
+void
+free_parser_state(ParserState *state) {
+    if (state == NULL) {
+        return;
+    }
+    if (state->tl != NULL) {
+        arr_free(state->tl);
+        state->tl = NULL;
+    }
+    if (state->ast_root != NULL) {
+        free_ast_node(state->ast_root);
+        state->ast_root = NULL;
+    }
+}
+
+static inline
+void
 print_one_debug_token(const Token *token) {
     if (token == NULL) {
         printf("<null token pointer>\n");
@@ -209,8 +244,7 @@ print_one_debug_token(const Token *token) {
 
 void
 print_debug_token(const ParserState *state) {
-    for (size_t i = 0; i < ARR_SIZE(state->tl); ++i) {
-        print_one_debug_token(&state->tl[i]);
+    for (size_t i = 0; i < arr_len(state->tl); ++i) {
+        print_one_debug_token(arr_at(state->tl, i));
     }
 }
-

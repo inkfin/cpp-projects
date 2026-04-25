@@ -39,7 +39,7 @@ DEP := $(patsubst %.c,$(DEP_DIR)/%.d,$(SRC))
 
 TARGET := $(BIN_DIR)/$(TARGET_NAME)
 
-INCLUDE_FLAG := -I$(INCLUDE_DIR)
+INCLUDE_FLAG := $(addprefix -I,$(INCLUDE_DIR))
 
 .PHONY: all debug release clean print
 
@@ -127,4 +127,3 @@ print:
 #   -MP  : Add phony rules for headers to avoid make errors if deleted
 #   -MF  : Specify dependency file output path
 #   -c   : Compile only, do not link
-

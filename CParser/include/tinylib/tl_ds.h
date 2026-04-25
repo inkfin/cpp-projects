@@ -79,19 +79,6 @@ typedef unsigned char byte_t;
     } while (0)
 #endif
 
-typedef struct TL_String8 {
-    char  *str;
-    size_t len;
-} TL_String8;
-
-typedef struct TL_StringView {
-    union {
-        TL_String8 *str8;
-    } as;
-    size_t start;
-    size_t end;  // exclusive
-} TL_StringView;
-
 /////////////////////
 /** Dynamic Array **/
 /////////////////////

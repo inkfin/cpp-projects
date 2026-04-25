@@ -4,7 +4,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
-#include "tl_def.h"
+#include "tinylib/defs.h"
+
+#define TLDS_ABBR
+#include "tinylib/data_struct.h"
 
 typedef enum {
     EPARSE_SUCCESS,
@@ -12,11 +15,6 @@ typedef enum {
     EPARSE_INVALID_TOKEN,
     EPARSE_CORRUPT_STATE,
 } ParseResult;
-
-typedef struct ParserState {
-    struct Token   *tl;
-    struct ASTNode *ast_root;
-} ParserState;
 
 
 /** Helpers **/
@@ -199,6 +197,8 @@ typedef struct Token {
     } val;
 } Token;
 
+TL_DECLARE_ARR_TYPE(TL_ArrToken, Token);
+
 /** AST definitions **/
 
 typedef enum ASTNodeType {
@@ -214,6 +214,11 @@ typedef struct ASTNode {
     struct ASTNode *left;
     struct ASTNode *right;
 } ASTNode;
+
+typedef struct ParserState {
+    TL_ArrToken *tl;
+    ASTNode     *ast_root;
+} ParserState;
 
 /** Lexer functions **/
 
@@ -253,6 +258,17 @@ tokenize_buffer(ParserState *state, const char *buffer, size_t buffer_size);
 ParseResult
 parse_buffer(ParserState *state, const char *buffer, size_t buffer_size);
 
+/**
+ * Free an AST node and its children recursively.
+ */
+void
+free_ast_node(ASTNode *root);
+
+/**
+ * Free a parser state and its associated resources.
+ */
+void
+free_parser_state(ParserState *state);
 
 /** Debug **/
 
