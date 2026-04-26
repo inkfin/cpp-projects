@@ -1,0 +1,10 @@
+target/
+build/
+out/
+
+.claude/*.local.*
+
+.nvim.lua
+.zed/
+.vscode/
+
