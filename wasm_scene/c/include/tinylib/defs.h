@@ -2,8 +2,8 @@
  * tl_def.h
  *   Common type definitions for C language
  */
-#ifndef TINYLIB_DEF_H
-#define TINYLIB_DEF_H
+#ifndef TINYLIB_DEFS_H
+#define TINYLIB_DEFS_H
 
 #include <stddef.h>
 #include <stdint.h>
@@ -23,4 +23,4 @@ typedef uint16_t u16_t;
 typedef uint32_t u32_t;
 typedef uint64_t u64_t;
 
-#endif /* TINYLIB_DEF_H */
+#endif /* TINYLIB_DEFS_H */

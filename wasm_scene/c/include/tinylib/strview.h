@@ -1,9 +1,21 @@
-#ifndef TINYLIB_STR_VIEW_H
-#define TINYLIB_STR_VIEW_H
+#ifndef TINYLIB_STRVIEW_H
+#define TINYLIB_STRVIEW_H
 
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+
+#if defined(__has_attribute)
+#define TL_STR__HAS_ATTRIBUTE(attr) __has_attribute(attr)
+#else
+#define TL_STR__HAS_ATTRIBUTE(attr) 0
+#endif
+
+#if TL_STR__HAS_ATTRIBUTE(unused)
+#define TL_STR__MAYBE_UNUSED __attribute__((unused))
+#else
+#define TL_STR__MAYBE_UNUSED
+#endif
 
 typedef struct TL_Str8 {
     char *data;
@@ -16,14 +28,15 @@ typedef struct TL_ZStr {
 } TL_ZStr;
 
 typedef struct TL_StrView {
-    char *data;
+    const char *data;
     size_t beg;
     size_t end;  // exclusive
 } TL_StrView;
 
-#define STR_FMT "%.*s"
-#define STR_ARG(s) (int)((s).end - (s).beg), ((s).data + (s).beg)
+#define TL_STR_FMT "%.*s"
+#define TL_STR_ARG(s) (int)((s).end - (s).beg), ((s).data + (s).beg)
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_Str8
 tl_str8_new(const char *str, size_t len) {
@@ -36,6 +49,7 @@ tl_str8_new(const char *str, size_t len) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_ZStr
 tl_zstr_new(const char *str, size_t len) {
@@ -49,9 +63,10 @@ tl_zstr_new(const char *str, size_t len) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_StrView
-tl_sv_from_str8(TL_Str8 *str) {
+tl_sv_from_str8(const TL_Str8 *str) {
     return (TL_StrView){
         .data = str->data,
         .beg = 0,
@@ -59,9 +74,10 @@ tl_sv_from_str8(TL_Str8 *str) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_StrView
-tl_sv_from_zstr(TL_ZStr *str) {
+tl_sv_from_zstr(const TL_ZStr *str) {
     return (TL_StrView){
         .data = str->data,
         .beg = 0,
@@ -69,9 +85,10 @@ tl_sv_from_zstr(TL_ZStr *str) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_StrView
-tl_sv_trim_left(TL_StrView *sv) {
+tl_sv_trim_left(const TL_StrView *sv) {
     assert(sv != NULL);
     size_t beg = sv->beg;
     size_t end = sv->end;
@@ -87,9 +104,10 @@ tl_sv_trim_left(TL_StrView *sv) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_StrView
-tl_sv_trim_right(TL_StrView *sv) {
+tl_sv_trim_right(const TL_StrView *sv) {
     assert(sv != NULL);
     size_t beg = sv->beg;
     size_t end = sv->end;
@@ -105,9 +123,10 @@ tl_sv_trim_right(TL_StrView *sv) {
     };
 }
 
+TL_STR__MAYBE_UNUSED
 static inline
 TL_StrView
-tl_sv_trim(TL_StrView *sv) {
+tl_sv_trim(const TL_StrView *sv) {
     assert(sv != NULL);
     size_t beg = sv->beg;
     size_t end = sv->end;
@@ -128,10 +147,13 @@ tl_sv_trim(TL_StrView *sv) {
     };
 }
 
-#ifndef TLSV_NO_ABBR
+#undef TL_STR__MAYBE_UNUSED
+#undef TL_STR__HAS_ATTRIBUTE
+
+#if defined(TL_STR_SHORT_NAMES) || defined(TL_SHORT_NAMES)
 typedef TL_Str8    Str8;
 typedef TL_ZStr    ZStr;
 typedef TL_StrView StrV;
-#endif // TLSV_NO_ABBR
+#endif // TL_STR_SHORT_NAMES
 
-#endif  // TINYLIB_STR_VIEW_H
+#endif  // TINYLIB_STRVIEW_H
