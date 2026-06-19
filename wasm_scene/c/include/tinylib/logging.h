@@ -9,6 +9,33 @@
  *     - Thin logging macros that only inject source location
  *     - Optional file output
  *
+ *   How to start:
+ *
+ *     TL_LogConfig cfg = {0};
+ *     tl_log_init(&cfg);
+ *     TL_LOG_INFO("started");
+ *
+ *   Zero-initialized TL_LogConfig is the default configuration:
+ *
+ *     - level:        INFO and above
+ *     - output:       stdout for non-error logs
+ *     - error_output: stderr for errors
+ *     - file mode:    overwrite if file output is selected
+ *     - flushing:     enabled after every write
+ *     - prefix:       time, level, file, line, and function
+ *
+ *   To customize, start from {0} and set only the fields that differ:
+ *
+ *     TL_LogConfig cfg = {0};
+ *     cfg.level = TL_LOG_LEVEL_DEBUG;
+ *     cfg.output = TL_LOG_OUTPUT_FILE;
+ *     cfg.error_output = TL_LOG_OUTPUT_FILE;
+ *     cfg.filename = "app.log";
+ *     cfg.disable_file = 1;
+ *     cfg.disable_line = 1;
+ *     cfg.disable_func = 1;
+ *     tl_log_init(&cfg);
+ *
  *   Notes:
  *     - Compile tinylib/logging.c, or include it in exactly one translation
  *       unit, to provide the implementation.
@@ -36,7 +63,6 @@ extern "C" {
 
 #include <stdarg.h>
 #include <stddef.h>
-#include <stdbool.h>
 #include <stdio.h>
 
 #if defined(__clang__) || defined(__GNUC__)
@@ -84,67 +110,70 @@ extern "C" {
 /* -------------------------------------------------------------------------- */
 
 typedef enum TL_LogLevel {
-    TL_LOG_LEVEL_DEBUG = 0,
-    TL_LOG_LEVEL_INFO  = 1,
-    TL_LOG_LEVEL_WARN  = 2,
-    TL_LOG_LEVEL_ERROR = 3,
+    TL_LOG_LEVEL_DEBUG = -1,
+    TL_LOG_LEVEL_INFO  = 0,
+    TL_LOG_LEVEL_WARN  = 1,
+    TL_LOG_LEVEL_ERROR = 2,
 } TL_LogLevel;
 
 typedef enum TL_LogOutput {
-    TL_LOG_OUTPUT_STDOUT = 0,
-    TL_LOG_OUTPUT_STDERR = 1,
-    TL_LOG_OUTPUT_FILE   = 2,
+    TL_LOG_OUTPUT_DEFAULT = 0,
+    TL_LOG_OUTPUT_STDOUT  = 1,
+    TL_LOG_OUTPUT_STDERR  = 2,
+    TL_LOG_OUTPUT_FILE    = 3,
 } TL_LogOutput;
 
 typedef struct TL_LogConfig {
-    /* Minimum enabled level. Messages below this level are ignored. */
+    /* Minimum enabled level. Default: TL_LOG_LEVEL_INFO. */
     TL_LogLevel level;
 
-    /* Default output target for non-error logs. */
+    /* Output target for DEBUG/LOG/WARN messages. DEFAULT resolves to stdout. */
     TL_LogOutput output;
 
-    /* Output target for error logs. */
+    /* Output target for ERROR messages. DEFAULT resolves to stderr. */
     TL_LogOutput error_output;
 
-    /* Path to log file when output or error_output is TL_LOG_OUTPUT_FILE. */
+    /* Path when either output field is TL_LOG_OUTPUT_FILE. Default: NULL. */
     const char *filename;
 
-    /* true: append to file. false: overwrite file. */
-    bool append;
+    /* File open mode. Default: 0 overwrites; non-zero appends. */
+    int append;
 
-    /* true: flush after each log write. */
-    bool auto_flush;
+    /* Disable switches.
+     *
+     * These are intentionally negative flags so TL_LogConfig cfg = {0} is a
+     * complete, useful default configuration. Leave a field at 0 to keep that
+     * behavior enabled; set it non-zero to turn that behavior off.
+     *
+     * Default output shape:
+     *     [YYYY-MM-DD HH:MM:SS] [INFO] file.c:42 function(): message
+     */
 
-    /* Formatting switches. */
-    bool show_time;
-    bool show_level;
-    bool show_file;
-    bool show_line;
-    bool show_func;
+    /* Default: 0, flush after each log write. */
+    int disable_auto_flush;
+
+    /* Default: 0, include timestamp prefix. */
+    int disable_time;
+
+    /* Default: 0, include level prefix. */
+    int disable_level;
+
+    /* Default: 0, include source file path when provided. */
+    int disable_file;
+
+    /* Default: 0, include source line. */
+    int disable_line;
+
+    /* Default: 0, include function name when provided. */
+    int disable_func;
 } TL_LogConfig;
-
-/* Full default initializer for TL_LogConfig. */
-#define TL_LOG_CONFIG_DEFAULT \
-    (TL_LogConfig){ \
-        .level = TL_LOG_LEVEL_INFO, \
-        .output = TL_LOG_OUTPUT_STDOUT, \
-        .error_output = TL_LOG_OUTPUT_STDERR, \
-        .filename = NULL, \
-        .append = true, \
-        .auto_flush = true, \
-        .show_time = true, \
-        .show_level = true, \
-        .show_file = true, \
-        .show_line = true, \
-        .show_func = true, \
-    }
 
 /* -------------------------------------------------------------------------- */
 /* Configuration API                                                          */
 /* -------------------------------------------------------------------------- */
 
 /* Initializes the global logger with cfg.
- * If cfg is NULL, TL_LOG_CONFIG_DEFAULT is used.
+ * If cfg is NULL, the zero-initialized default configuration is used.
  *
  * Returns non-zero on success, zero on failure.
  */

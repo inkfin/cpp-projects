@@ -44,7 +44,7 @@ static void
 tl__ensure_initialized_locked(void)
 {
     if (!g__log_state.initialized) {
-        g__log_state.config = TL_LOG_CONFIG_DEFAULT;
+        g__log_state.config = (TL_LogConfig){0};
         g__log_state.initialized = 1;
     }
 }
@@ -58,9 +58,12 @@ tl__sanitize_level(TL_LogLevel level)
 }
 
 static FILE *
-tl__resolve_stream(TL_LogOutput out)
+tl__resolve_stream(TL_LogOutput out, FILE *default_stream)
 {
     switch (out) {
+    case TL_LOG_OUTPUT_DEFAULT:
+        return default_stream;
+
     case TL_LOG_OUTPUT_STDOUT:
         return stdout;
 
@@ -73,15 +76,15 @@ tl__resolve_stream(TL_LogOutput out)
         return stderr;
     }
 
-    return stderr;
+    return default_stream;
 }
 
 static FILE *
 tl__select_stream(TL_LogLevel level)
 {
     if (level >= TL_LOG_LEVEL_ERROR)
-        return tl__resolve_stream(g__log_state.config.error_output);
-    return tl__resolve_stream(g__log_state.config.output);
+        return tl__resolve_stream(g__log_state.config.error_output, stderr);
+    return tl__resolve_stream(g__log_state.config.output, stdout);
 }
 
 static int
@@ -145,7 +148,7 @@ tl__open_file(const TL_LogConfig *cfg)
 int
 tl_log_init(const TL_LogConfig *cfg)
 {
-    TL_LogConfig next = cfg ? *cfg : TL_LOG_CONFIG_DEFAULT;
+    TL_LogConfig next = cfg ? *cfg : (TL_LogConfig){0};
     int ok = 0;
 
     next.level = tl__sanitize_level(next.level);
@@ -212,11 +215,11 @@ tl_log_flush(void)
     tl__log_lock();
     tl__ensure_initialized_locked();
 
-    out = tl__resolve_stream(g__log_state.config.output);
+    out = tl__resolve_stream(g__log_state.config.output, stdout);
     if (fflush(out) != 0)
         ok = 0;
 
-    err = tl__resolve_stream(g__log_state.config.error_output);
+    err = tl__resolve_stream(g__log_state.config.error_output, stderr);
     if (err != out && fflush(err) != 0)
         ok = 0;
 
@@ -282,7 +285,7 @@ tl__write_prefix(FILE *stream,
     int has_prefix = 0;
     int has_location = 0;
 
-    if (g__log_state.config.show_time) {
+    if (!g__log_state.config.disable_time) {
 
         time_t t = time(NULL);
         struct tm tmv;
@@ -295,17 +298,17 @@ tl__write_prefix(FILE *stream,
         }
     }
 
-    if (g__log_state.config.show_level) {
+    if (!g__log_state.config.disable_level) {
         fprintf(stream, "[%s] ", tl__level_string(level));
         has_prefix = 1;
     }
 
-    if (g__log_state.config.show_file && file) {
+    if (!g__log_state.config.disable_file && file) {
         fprintf(stream, "%s", file);
         has_location = 1;
     }
 
-    if (g__log_state.config.show_line) {
+    if (!g__log_state.config.disable_line) {
         if (has_location)
             fprintf(stream, ":%d", line);
         else
@@ -313,7 +316,7 @@ tl__write_prefix(FILE *stream,
         has_location = 1;
     }
 
-    if (g__log_state.config.show_func && func) {
+    if (!g__log_state.config.disable_func && func) {
         if (has_location)
             fprintf(stream, " %s()", func);
         else
@@ -357,7 +360,7 @@ tl__log_vwrite(TL_LogLevel level,
 
     fprintf(stream, "\n");
 
-    if (g__log_state.config.auto_flush)
+    if (!g__log_state.config.disable_auto_flush)
         fflush(stream);
 
     tl__log_unlock();
@@ -402,7 +405,7 @@ tl_log_write_raw(TL_LogLevel level,
     fputs(msg ? msg : "(null)", stream);
     fputc('\n', stream);
 
-    if (g__log_state.config.auto_flush)
+    if (!g__log_state.config.disable_auto_flush)
         fflush(stream);
 
     tl__log_unlock();
