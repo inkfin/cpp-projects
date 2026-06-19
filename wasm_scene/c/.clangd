@@ -8,6 +8,7 @@ Hover:
 CompileFlags:
   Add: [
     -xc,
+    -xobjective-c,
     -std=gnu11,
     -Wall,
     -Wextra,

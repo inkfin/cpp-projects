@@ -232,6 +232,13 @@ tl_log_is_enabled(TL_LogLevel level);
 
 /* Optional short aliases. */
 #if defined(TL_LOG_SHORT_NAMES) || defined(TL_SHORT_NAMES)
+#  if defined(__APPLE__)
+/* macOS <sys/syslog.h> defines LOG_DEBUG/INFO/WARN/ERROR as ints */
+#    undef LOG_DEBUG
+#    undef LOG_INFO
+#    undef LOG_WARN
+#    undef LOG_ERROR
+#  endif
 #  define LOG_DEBUG(...) TL_LOG_DEBUG(__VA_ARGS__)
 #  define LOG_INFO(...)  TL_LOG_INFO(__VA_ARGS__)
 #  define LOG_WARN(...)  TL_LOG_WARN(__VA_ARGS__)
