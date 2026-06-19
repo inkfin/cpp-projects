@@ -49,3 +49,6 @@
 !wasm_scene/
 !wasm_scene/**
 
+# always ignores
+.root
+
