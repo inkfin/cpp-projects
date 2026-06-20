@@ -21,16 +21,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/** Configs **/
 
-const char *s_app_name = "wasm_scene";
-#define APP_DEFAULT_WINDOW_WIDTH 640
-#define APP_DEFAULT_WINDOW_HEIGHT 480
+static const char APP_NAME[] = "wasm_scene";
+static const int APP_DEFAULT_WINDOW_WIDTH = 640;
+static const int APP_DEFAULT_WINDOW_HEIGHT = 480;
+
+static TL_LogConfig TL_LogGlobalCfg = {
+    .level = TL_LOG_LEVEL_DEBUG,
+};
 
 struct AppState {
     const char *app_name;
-    sg_pass_action pass_action;
 } g_state;
 
+/** life-cycle functions **/
 
 static
 void
@@ -39,23 +44,22 @@ init_cb(void) {
         .environment = sglue_environment(),
         .logger.func = slog_func,
     });
-    g_state.pass_action = (sg_pass_action) {
-        .colors[0] = {
-            .load_action = SG_LOADACTION_CLEAR,
-            .clear_value = {0.8f, 0.8f, 0.2f, 1.0f},
-        },
-    };
-
-    // void *devices = sapp_wgpu_get_device();
-    // assert(devices && "WGPU not supported!");
 }
 
 static
 void
 frame_cb(void) {
+    const sg_pass_action pass_action_clear = {
+        .colors[0] =
+            {
+                .load_action = SG_LOADACTION_CLEAR,
+                .clear_value = {0.8f, 0.8f, 0.2f, 1.0f},
+            },
+    };
+
     sg_begin_pass(&(sg_pass){
         .label     = "main_frame",
-        .action    = g_state.pass_action,
+        .action    = pass_action_clear,
         .swapchain = sglue_swapchain(),
     });
     {
@@ -68,7 +72,7 @@ frame_cb(void) {
 static
 void
 cleanup_cb(void) {
-    fprintf(stdout, "Cleanup callback\n");
+    LOG_INFO("Cleanup callback");
 
     sg_shutdown();
 }
@@ -76,38 +80,26 @@ cleanup_cb(void) {
 static
 void
 event_cb(const sapp_event* event) {
-    fprintf(stdout, "Event cb\n");
-    fprintf(stdout, "  keycode: %d\n", event->key_code);
+    LOG_INFO("Event cb");
+    LOG_DEBUG("  keycode: %d", event->key_code);
 }
 
 sapp_desc
 sokol_main(int argc, char* argv[]) {
     // tinylib stuff
-    tl_log_init(&(TL_LogConfig){
-        .level = TL_LOG_LEVEL_INFO,
-        .output = TL_LOG_OUTPUT_STDOUT,
-        .error_output = TL_LOG_OUTPUT_STDERR,
-        .filename = NULL,
-        .append = true,
-        .auto_flush = true,
-        .show_time = true,
-        .show_level = true,
-        .show_file = true,
-        .show_line = true,
-        .show_func = true,
-    });
+    tl_log_init(&TL_LogGlobalCfg);
 
     // Init states
     g_state = (struct AppState){0};
-    g_state.app_name = s_app_name;
+    g_state.app_name = APP_NAME;
 
     // Handle arguments
-    sargs_setup(&(sargs_desc){
-        .argc = argc,
-        .argv = argv
-    });
+    sargs_setup(&(sargs_desc){ .argc = argc, .argv = argv });
+    for (int i = 0; i < sargs_num_args(); i++) {
+        LOG_DEBUG("key: %s, value: %s", sargs_key_at(i), sargs_value_at(i));
+    }
 
-    if (sargs_exists("help")) {
+    if (sargs_exists("--help") || sargs_exists("-h")) {
         fprintf(stdout,
             "Usage: [%s] <opts>\n"
             "Opts:\n"

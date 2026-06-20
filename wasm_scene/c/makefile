@@ -25,6 +25,8 @@ endif
 ifeq ($(PLATFORM), macos)
   CFLAGS   += -x objective-c
   INCLUDE  += -I$(DAWN_DIR)/include
+  # LLD is faster but emits noisy warnings with Dawn's .a (harmless).
+  # Uncomment to enable:  LDFLAGS  += -fuse-ld=lld
   LDFLAGS  += $(DAWN_LIB) -lc++ -lobjc
   LDFLAGS  += -framework AppKit -framework QuartzCore -framework Metal
   LDFLAGS  += -framework CoreFoundation -framework IOKit -framework IOSurface
@@ -74,9 +76,14 @@ debug: $(TARGET)
 release: CFLAGS += $(CFLAGS_RELEASE)
 release: $(TARGET)
 
-$(TARGET): $(SRC)
+TARGET_OBJ := $(TARGET).o
+
+$(TARGET_OBJ): $(SRC)
 	@mkdir -p $(@D)
-	$(CC) $(INCLUDE) $(CFLAGS) $< -x none $(LDFLAGS) -o $@
+	$(CC) $(INCLUDE) $(CFLAGS) -c $< -o $@
+
+$(TARGET): $(TARGET_OBJ)
+	$(CC) $(TARGET_OBJ) $(LDFLAGS) -o $@
 
 clean:
 	rm -rf target
