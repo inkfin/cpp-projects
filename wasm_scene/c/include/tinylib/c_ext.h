@@ -309,9 +309,13 @@
 
 #if TL_HAS_GNU_EXTENSIONS
 #define TL_REGISTER_INIT(fn) \
-    static void __attribute__((constructor)) TL_UNIQUE_NAME(tl__init)(void) { (fn)(); }
+    static __attribute__((constructor)) \
+    void \
+    TL_UNIQUE_NAME(tl__init)(void) { (fn)(); }
 #define TL_REGISTER_FINI(fn) \
-    static void __attribute__((destructor)) TL_UNIQUE_NAME(tl__fini)(void) { (fn)(); }
+    static __attribute__((destructor)) \
+    void \
+    TL_UNIQUE_NAME(tl__fini)(void) { (fn)(); }
 
 #elif defined(_MSC_VER)
 #define TL_REGISTER_INIT(fn) \
