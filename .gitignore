@@ -49,6 +49,9 @@
 !wasm_scene/
 !wasm_scene/**
 
+!SPC/
+!SPC/**
+
 # always ignores
 .root
 
